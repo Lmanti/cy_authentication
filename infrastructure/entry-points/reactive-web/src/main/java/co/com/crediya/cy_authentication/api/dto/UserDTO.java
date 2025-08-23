@@ -1,5 +1,4 @@
-package co.com.crediya.cy_authentication.model.user;
-import lombok.Builder;
+package co.com.crediya.cy_authentication.api.dto;
 
 import java.time.LocalDate;
 
@@ -8,12 +7,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter
-@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder(toBuilder = true)
-public class User {
+@Getter
+@Setter
+public class UserDTO {
     private Long idNumber;
     private Integer idType;
     private String name;

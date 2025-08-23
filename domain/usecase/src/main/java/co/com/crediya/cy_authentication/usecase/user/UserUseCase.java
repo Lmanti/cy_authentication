@@ -11,7 +11,7 @@ public class UserUseCase implements IUserUseCase {
     private final UserRepository userRepository;
 
     @Override
-    public Mono<User> saveUser(User user) {
+    public Mono<User> saveUser(Mono<User> user) {
         return userRepository.saveUser(user);
     }
 
@@ -26,12 +26,12 @@ public class UserUseCase implements IUserUseCase {
     }
 
     @Override
-    public Mono<User> editUser(User user) {
+    public Mono<User> editUser(Mono<User> user) {
         return userRepository.editUser(user);
     }
 
     @Override
-    public void deleteUser(Long idNumber) {
-        userRepository.deleteUser(idNumber);
+    public Mono<Void> deleteUser(Long idNumber) {
+        return userRepository.deleteUser(idNumber);
     }
 }

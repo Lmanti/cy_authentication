@@ -1,9 +1,13 @@
 package co.com.crediya.cy_authentication.r2dbc;
 
+import java.math.BigInteger;
+
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 
-// TODO: This file is just an example, you should delete or modify it
-public interface MyReactiveRepository extends ReactiveCrudRepository<Object, String>, ReactiveQueryByExampleExecutor<Object> {
+import co.com.crediya.cy_authentication.r2dbc.entity.UserEntity;
+import reactor.core.publisher.Mono;
 
+public interface MyReactiveRepository extends ReactiveCrudRepository<UserEntity, BigInteger>, ReactiveQueryByExampleExecutor<UserEntity> {
+    Mono<UserEntity> findByIdNumber(Long idNumber);
 }
