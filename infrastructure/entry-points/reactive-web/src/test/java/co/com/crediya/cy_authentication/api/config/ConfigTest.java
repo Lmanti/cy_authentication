@@ -6,21 +6,23 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@ContextConfiguration(classes = {RouterRest.class, Handler.class})
 @WebFluxTest
+@ContextConfiguration(classes = {RouterRest.class, Handler.class, TestConfig.class})
 @Import({CorsConfig.class, SecurityHeadersConfig.class})
+@ActiveProfiles("test")
 class ConfigTest {
 
     @Autowired
     private WebTestClient webTestClient;
 
     @Test
-    void corsConfigurationShouldAllowOrigins() {
+    void securityHeadersShouldBePresent() {
         webTestClient.get()
-                .uri("/api/usecase/path")
+                .uri("/api/v1/usuarios")
                 .exchange()
                 .expectStatus().isOk()
                 .expectHeader().valueEquals("Content-Security-Policy",
@@ -33,4 +35,16 @@ class ConfigTest {
                 .expectHeader().valueEquals("Referrer-Policy", "strict-origin-when-cross-origin");
     }
 
+    // Si quieres probar específicamente la configuración CORS
+    @Test
+    void corsHeadersShouldBePresent() {
+        webTestClient.options()
+                .uri("/api/v1/usuarios")
+                .header("Origin", "http://localhost:4200")
+                .header("Access-Control-Request-Method", "GET")
+                .exchange()
+                .expectStatus().isOk()
+                .expectHeader().exists("Access-Control-Allow-Origin")
+                .expectHeader().exists("Access-Control-Allow-Methods");
+    }
 }

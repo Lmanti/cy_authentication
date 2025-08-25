@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14-alpine
+    container_name: cy_auth_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: cy_auth_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cy_auth_network
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./deployment/Dockerfile
+    container_name: cy_auth_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=dev
+      - SPRING_R2DBC_URL=r2dbc:postgresql://postgres:5432/cy_auth_db
+      - SPRING_R2DBC_USERNAME=postgres
+      - SPRING_R2DBC_PASSWORD=postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - cy_auth_network
+
+networks:
+  cy_auth_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

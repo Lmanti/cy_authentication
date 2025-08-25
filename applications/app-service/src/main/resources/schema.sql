@@ -1,0 +1,16 @@
+DROP TABLE IF EXISTS users CASCADE;
+
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    id_number BIGINT NOT NULL UNIQUE,
+    id_type INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    lastname VARCHAR(255) NOT NULL,
+    birth_date DATE,
+    address VARCHAR(255),
+    phone VARCHAR(50),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    base_salary DECIMAL(12,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

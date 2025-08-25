@@ -3,33 +3,41 @@ package co.com.crediya.cy_authentication.r2dbc.entity;
 import java.math.BigInteger;
 import java.time.LocalDate;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
-@Entity
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
+@ToString
+@Table("users")
 public class UserEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private BigInteger id;
-    @Column(unique = true)
+    @Column("id_number")
     private Long idNumber;
+    @Column("id_type")
     private Integer idType;
+    @Column
     private String name;
+    @Column
     private String lastname;
+    @Column("birth_date")
     private LocalDate birthDate;
+    @Column
     private String address;
+    @Column
     private String phone;
-    private String eMail;
+    @Column
+    private String email;
+    @Column("base_salary")
     private Double baseSalary;
 }

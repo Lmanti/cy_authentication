@@ -22,6 +22,7 @@ public class Handler {
     private final UserDTOMapper userMapper;
 
     public Mono<ServerResponse> getAllUsers(ServerRequest serverRequest) {
+        System.out.println("LLega al controller");
         return userUseCase.getAllUsers().collectList()
             .flatMap(userList -> ServerResponse.ok().bodyValue(userMapper.toResponseList(userList)));
     }
@@ -47,7 +48,7 @@ public class Handler {
     }
 
     public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
-        userUseCase.deleteUser(Long.parseLong(serverRequest.pathVariable("idNumber")));
-        return ServerResponse.ok().build();
+        return userUseCase.deleteUser(Long.parseLong(serverRequest.pathVariable("idNumber")))
+            .then(ServerResponse.ok().build());
     }
 }

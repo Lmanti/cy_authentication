@@ -19,6 +19,6 @@ public class UserDTO {
     private LocalDate birthDate;
     private String address;
     private String phone;
-    private String eMail;
+    private String email;
     private Double baseSalary;
 }

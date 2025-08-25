@@ -7,12 +7,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder(toBuilder = true)
+@ToString
 public class User {
     private Long idNumber;
     private Integer idType;
@@ -21,6 +23,6 @@ public class User {
     private LocalDate birthDate;
     private String address;
     private String phone;
-    private String eMail;
+    private String email;
     private Double baseSalary;
 }

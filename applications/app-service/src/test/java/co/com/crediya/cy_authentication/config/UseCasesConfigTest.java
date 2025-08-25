@@ -1,6 +1,8 @@
 package co.com.crediya.cy_authentication.config;
 
+import co.com.crediya.cy_authentication.model.user.gateways.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,7 +24,7 @@ public class UseCasesConfigTest {
                 }
             }
 
-            assertTrue(useCaseBeanFound, "No beans ending with 'Use Case' were found");
+            assertTrue(useCaseBeanFound, "No beans ending with 'UseCase' were found");
         }
     }
 
@@ -33,6 +35,12 @@ public class UseCasesConfigTest {
         @Bean
         public MyUseCase myUseCase() {
             return new MyUseCase();
+        }
+        
+        // Agrega un mock del UserRepository que necesita UserUseCase
+        @Bean
+        public UserRepository userRepository() {
+            return Mockito.mock(UserRepository.class);
         }
     }
 
