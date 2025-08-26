@@ -40,7 +40,7 @@ public class MyReactiveRepositoryAdapter extends ReactiveAdapterOperations<
         this.template = template;
     }
 
-    private ReactiveUserCriteriaBuilder configureCriteriaBuilder() {
+    public ReactiveUserCriteriaBuilder configureCriteriaBuilder() {
         return new ReactiveUserCriteriaBuilder(template);
     }
 
@@ -111,7 +111,6 @@ public class MyReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 .flatMap(existingEntity -> {
                     log.debug("Found existing user: {}", existingEntity.getId());
 
-                    // Actualizar los campos pero mantener la misma instancia de entidad
                     existingEntity.setIdNumber(userData.getIdNumber());
                     existingEntity.setIdType(userData.getIdType());
                     existingEntity.setName(userData.getName());

@@ -134,6 +134,13 @@ public class ReactiveUserCriteriaBuilder {
         }
         return this;
     }
+
+    public ReactiveUserCriteriaBuilder withUsername(String username) {
+        if (username != null && !username.trim().isEmpty()) {
+            criteriaList.add(Criteria.where("username").is(username));
+        }
+        return this;
+    }
     
     public ReactiveUserCriteriaBuilder withCriteria(Map<String, Object> criteria) {
         if (criteria != null) {
@@ -152,7 +159,7 @@ public class ReactiveUserCriteriaBuilder {
             if (criteria.containsKey("lastname")) {
                 withLastname((String) criteria.get("lastname"));
             }
-            // Campos faltantes
+
             if (criteria.containsKey("birthDate")) {
                 withBirthDate((LocalDate) criteria.get("birthDate"));
             }
@@ -164,6 +171,9 @@ public class ReactiveUserCriteriaBuilder {
             }
             if (criteria.containsKey("baseSalary")) {
                 withBaseSalary((Double) criteria.get("baseSalary"));
+            }
+            if (criteria.containsKey("username")) {
+                withUsername((String) criteria.get("username"));
             }
         }
         return this;
@@ -180,6 +190,7 @@ public class ReactiveUserCriteriaBuilder {
             withPhone(user.getPhone());
             withEmail(user.getEmail());
             withBaseSalary(user.getBaseSalary());
+            withUsername(user.getUsername());
         }
         return this;
     }

@@ -40,4 +40,10 @@ public class CreateUserDTO {
     
     @Schema(description = "Salario base del usuario", example = "2500000.0")
     private Double baseSalary;
+
+    @Schema(description = "Username del usuario", example = "juanperez123")
+    private String username;
+
+    @Schema(description = "Contraseña del usuario", example = "123456")
+    private String password;
 }

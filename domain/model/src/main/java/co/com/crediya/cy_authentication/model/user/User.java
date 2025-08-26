@@ -25,4 +25,6 @@ public class User {
     private String phone;
     private String email;
     private Double baseSalary;
+    private String username;
+    private String password;
 }

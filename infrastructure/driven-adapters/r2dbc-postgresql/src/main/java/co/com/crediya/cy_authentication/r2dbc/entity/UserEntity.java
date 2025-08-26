@@ -40,4 +40,8 @@ public class UserEntity {
     private String email;
     @Column("base_salary")
     private Double baseSalary;
+    @Column
+    private String username;
+    @Column
+    private String password;
 }

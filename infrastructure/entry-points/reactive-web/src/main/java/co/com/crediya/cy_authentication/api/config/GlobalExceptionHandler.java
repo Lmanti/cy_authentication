@@ -4,6 +4,7 @@ import co.com.crediya.cy_authentication.api.dto.ErrorResponse;
 import co.com.crediya.cy_authentication.exception.DataPersistenceException;
 import co.com.crediya.cy_authentication.exception.InvalidUserDataException;
 import co.com.crediya.cy_authentication.exception.UserNotFoundException;
+import reactor.core.publisher.Mono;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(
+    public Mono<ResponseEntity<ErrorResponse>> handleUserNotFoundException(
             UserNotFoundException ex, ServerWebExchange exchange) {
         
         String path = exchange.getRequest().getPath().value();
@@ -25,11 +26,11 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = buildErrorResponse(
                 path, ex.getMessage(), HttpStatus.NOT_FOUND, traceId);
         
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        return Mono.just(ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse));
     }
 
     @ExceptionHandler(InvalidUserDataException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidUserDataException(
+    public Mono<ResponseEntity<ErrorResponse>> handleInvalidUserDataException(
             InvalidUserDataException ex, ServerWebExchange exchange) {
         
         String path = exchange.getRequest().getPath().value();
@@ -38,11 +39,11 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = buildErrorResponse(
                 path, ex.getMessage(), HttpStatus.BAD_REQUEST, traceId);
         
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse));
     }
     
     @ExceptionHandler(DataPersistenceException.class)
-    public ResponseEntity<ErrorResponse> handleDataPersistenceException(
+    public Mono<ResponseEntity<ErrorResponse>> handleDataPersistenceException(
             DataPersistenceException ex, ServerWebExchange exchange) {
         
         String path = exchange.getRequest().getPath().value();
@@ -52,11 +53,11 @@ public class GlobalExceptionHandler {
                 path, "Error en la persistencia de datos: " + ex.getMessage(), 
                 HttpStatus.INTERNAL_SERVER_ERROR, traceId);
         
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse));
     }
     
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
+    public Mono<ResponseEntity<ErrorResponse>> handleGenericException(
             Exception ex, ServerWebExchange exchange) {
         
         String path = exchange.getRequest().getPath().value();
@@ -65,7 +66,7 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = buildErrorResponse(
                 path, "Error interno del servidor", HttpStatus.INTERNAL_SERVER_ERROR, traceId);
         
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse));
     }
     
     private ErrorResponse buildErrorResponse(String path, String message, 
