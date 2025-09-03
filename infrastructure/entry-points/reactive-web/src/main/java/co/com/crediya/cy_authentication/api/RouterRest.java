@@ -9,6 +9,8 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import co.com.crediya.cy_authentication.api.dto.CreateUserDTO;
 import co.com.crediya.cy_authentication.api.dto.EditUserDTO;
 import co.com.crediya.cy_authentication.api.dto.UserDTO;
+import co.com.crediya.cy_authentication.model.idtype.IdType;
+import co.com.crediya.cy_authentication.model.role.Role;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -28,12 +30,14 @@ import org.springdoc.core.annotations.RouterOperations;
 
 @Configuration
 public class RouterRest {
-    private String baseRoute = "/api/v1/usuarios";
+    private final String userBaseRoute = "/api/v1/usuarios";
+    private final String idTypesBaseRoute = "/parameters/idTypes";
+    private final String rolesBaseRoute = "/parameters/roles";
 
     @Bean
     @RouterOperations({
         @RouterOperation(
-            path = "/api/v1/usuarios", 
+            path = userBaseRoute, 
             method = RequestMethod.GET,
             operation = @Operation(
                 operationId = "getAllUsers",
@@ -50,7 +54,7 @@ public class RouterRest {
             )
         ),
         @RouterOperation(
-            path = "/api/v1/usuarios", 
+            path = userBaseRoute, 
             method = RequestMethod.POST,
             operation = @Operation(
                 operationId = "createUser",
@@ -75,7 +79,7 @@ public class RouterRest {
             )
         ),
         @RouterOperation(
-            path = "/api/v1/usuarios", 
+            path = userBaseRoute, 
             method = RequestMethod.PUT,
             operation = @Operation(
                 operationId = "updateUser",
@@ -100,7 +104,7 @@ public class RouterRest {
             )
         ),
         @RouterOperation(
-            path = "/api/v1/usuarios/{idNumber}", 
+            path = userBaseRoute + "/{idNumber}", 
             method = RequestMethod.DELETE,
             operation = @Operation(
                 operationId = "deleteUser",
@@ -127,13 +131,48 @@ public class RouterRest {
                     )
                 }
             )
+        ),
+        @RouterOperation(
+            path = userBaseRoute + idTypesBaseRoute, 
+            method = RequestMethod.GET,
+            operation = @Operation(
+                operationId = "getAllIdTypes",
+                tags = {"Parámetros"},
+                summary = "Obtener todos los tipos de identificación",
+                description = "Retorna una lista con todos los tipos de identificación registrados",
+                responses = {
+                    @ApiResponse(
+                        responseCode = "200", 
+                        description = "Lista de tipos de identificación obtenida exitosamente",
+                        content = @Content(schema = @Schema(implementation = IdType.class))
+                    )
+                }
+            )
+        ),
+        @RouterOperation(
+            path = userBaseRoute + rolesBaseRoute, 
+            method = RequestMethod.GET,
+            operation = @Operation(
+                operationId = "getAllRoles",
+                tags = {"Parámetros"},
+                summary = "Obtener todos los roles",
+                description = "Retorna una lista con todos los roles registrados",
+                responses = {
+                    @ApiResponse(
+                        responseCode = "200", 
+                        description = "Lista de roles obtenida exitosamente",
+                        content = @Content(schema = @Schema(implementation = Role.class))
+                    )
+                }
+            )
         )
     })
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
-        return route(GET(baseRoute), handler::getAllUsers)
-                .andRoute(POST(baseRoute), handler::createUser)
-                .andRoute(PUT(baseRoute), handler::updateUser)
-                .andRoute(DELETE(baseRoute.concat("/{idNumber}")), handler::deleteUser);
-                // .and(route(GET("/api/otherusercase/path"), handler::listenGETOtherUseCase));
+        return route(GET(userBaseRoute), handler::getAllUsers)
+            .andRoute(POST(userBaseRoute), handler::createUser)
+            .andRoute(PUT(userBaseRoute), handler::updateUser)
+            .andRoute(DELETE(userBaseRoute.concat("/{idNumber}")), handler::deleteUser)
+            .andRoute(GET(userBaseRoute + idTypesBaseRoute), handler::getAllIdTypes)
+            .andRoute(GET(userBaseRoute + rolesBaseRoute), handler::getAllRoles);
     }
 }

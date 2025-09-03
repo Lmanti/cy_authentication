@@ -1,18 +1,30 @@
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS roles CASCADE;
+DROP TABLE IF EXISTS id_type CASCADE;
+
+CREATE TABLE IF NOT EXISTS id_type (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT
+);
 
 CREATE TABLE IF NOT EXISTS users (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     id_number BIGINT NOT NULL UNIQUE,
-    id_type INTEGER NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    lastname VARCHAR(255) NOT NULL,
-    birth_date DATE,
-    address VARCHAR(255),
-    phone VARCHAR(50),
-    email VARCHAR(255) NOT NULL UNIQUE,
-    base_salary DECIMAL(12,2),
-    username VARCHAR(50) NOT NULL,
-    password VARCHAR(50) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    id_type_id INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    lastname VARCHAR(100) NOT NULL,
+    birth_date DATE NOT NULL,
+    address TEXT,
+    phone VARCHAR(20),
+    email VARCHAR(150) UNIQUE,
+    base_salary DECIMAL(15,2),
+    role_id INTEGER NOT NULL,
+    password VARCHAR(255) NOT NULL
 );

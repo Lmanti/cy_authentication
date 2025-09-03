@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
         String traceId = exchange.getRequest().getId();
         
         ErrorResponse errorResponse = buildErrorResponse(
-                path, "Error interno del servidor", HttpStatus.INTERNAL_SERVER_ERROR, traceId);
+                path, "Error interno del servidor: " + ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR, traceId);
         
         return Mono.just(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse));
     }

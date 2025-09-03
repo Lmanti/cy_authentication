@@ -1,6 +1,7 @@
 package co.com.crediya.cy_authentication.model.user;
 import lombok.Builder;
 
+import java.math.BigInteger;
 import java.time.LocalDate;
 
 import lombok.AllArgsConstructor;
@@ -16,8 +17,9 @@ import lombok.ToString;
 @Builder(toBuilder = true)
 @ToString
 public class User {
+    private BigInteger id;
     private Long idNumber;
-    private Integer idType;
+    private Integer idTypeId;
     private String name;
     private String lastname;
     private LocalDate birthDate;
@@ -25,6 +27,6 @@ public class User {
     private String phone;
     private String email;
     private Double baseSalary;
-    private String username;
+    private Integer roleId;
     private String password;
 }

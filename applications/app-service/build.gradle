@@ -9,17 +9,18 @@ dependencies {
     
     // Dependencias de Spring
     implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
-    runtimeOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly('org.springframework.boot:spring-boot-devtools')
     
     // Utilidades
     implementation 'org.reactivecommons.utils:object-mapper:0.1.0'
     
     // Dependencias de pruebas
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'org.testcontainers:postgresql:1.19.7'
-    testImplementation 'org.testcontainers:r2dbc:1.19.7'
+    // testImplementation 'io.projectreactor:reactor-test'
+    // testImplementation 'org.testcontainers:postgresql:1.19.7'
+    // testImplementation 'org.testcontainers:r2dbc:1.19.7'
     testImplementation 'com.tngtech.archunit:archunit:1.4.1'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind'
 }

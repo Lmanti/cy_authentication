@@ -2,6 +2,8 @@ package co.com.crediya.cy_authentication.api.dto;
 
 import java.time.LocalDate;
 
+import co.com.crediya.cy_authentication.model.idtype.IdType;
+import co.com.crediya.cy_authentication.model.role.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,7 +20,7 @@ public class UserDTO {
     private Long idNumber;
     
     @Schema(description = "Tipo de identificación (1: CC, 2: CE, etc.)", example = "1")
-    private Integer idType;
+    private IdType idType;
     
     @Schema(description = "Nombre del usuario", example = "Juan")
     private String name;
@@ -41,8 +43,8 @@ public class UserDTO {
     @Schema(description = "Salario base del usuario", example = "2500000.0")
     private Double baseSalary;
 
-    @Schema(description = "Username del usuario", example = "juanperez123")
-    private String username;
+    @Schema(description = "Rol del usuario (1: Admin, 2: Asesor, etc.)", example = "1")
+    private Role role;
 
     @Schema(description = "Contraseña del usuario", example = "123456")
     private String password;

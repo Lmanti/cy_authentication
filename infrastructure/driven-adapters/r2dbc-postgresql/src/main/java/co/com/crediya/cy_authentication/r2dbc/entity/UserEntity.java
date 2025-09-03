@@ -21,11 +21,11 @@ import lombok.ToString;
 @Table("users")
 public class UserEntity {
     @Id
-    private BigInteger id;
+    private BigInteger id; 
     @Column("id_number")
     private Long idNumber;
-    @Column("id_type")
-    private Integer idType;
+    @Column("id_type_id")
+    private Integer idTypeId;
     @Column
     private String name;
     @Column
@@ -40,8 +40,8 @@ public class UserEntity {
     private String email;
     @Column("base_salary")
     private Double baseSalary;
-    @Column
-    private String username;
+    @Column("role_id")
+    private Integer roleId;
     @Column
     private String password;
 }

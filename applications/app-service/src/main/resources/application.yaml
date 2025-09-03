@@ -21,7 +21,7 @@ spring:
     init:
       mode: always
       schema-locations: classpath:schema.sql
-      # data-locations: classpath:data.sql
+      data-locations: classpath:data.sql
   profiles:
     include: null
 management:
@@ -34,10 +34,10 @@ management:
       probes:
         enabled: true
 cors:
-  allowed-origins: "http://localhost:4200,http://localhost:8080"
-logging:
-  level:
-    io.r2dbc.postgresql.QUERY: DEBUG
+  allowed-origins: "http://localhost:4200,http://localhost:8080,http://localhost:8081"
+# logging:
+#   level:
+#     io.r2dbc.postgresql.QUERY: DEBUG
 springdoc:
   api-docs:
     path: /api-docs

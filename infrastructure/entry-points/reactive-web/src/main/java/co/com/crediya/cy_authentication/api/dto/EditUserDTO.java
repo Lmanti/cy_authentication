@@ -18,7 +18,7 @@ public class EditUserDTO {
     private Long idNumber;
     
     @Schema(description = "Tipo de identificación (1: CC, 2: CE, etc.)", example = "1")
-    private Integer idType;
+    private Integer idTypeId;
     
     @Schema(description = "Nombre del usuario", example = "Juan")
     private String name;
@@ -40,6 +40,9 @@ public class EditUserDTO {
     
     @Schema(description = "Salario base del usuario", example = "2500000.0")
     private Double baseSalary;
+
+    @Schema(description = "Rol del usuario (1: Admin, 2: Asesor, etc.)", example = "1")
+    private Integer roleId;
 
     @Schema(description = "Contraseña del usuario", example = "123456")
     private String password;

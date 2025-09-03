@@ -1,7 +1,5 @@
-version: '3.8'
-
 services:
-  postgres:
+  auth-postgres:
     image: postgres:14-alpine
     container_name: cy_auth_postgres
     ports:
@@ -11,14 +9,33 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - auth_postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - cy_auth_network
+      - cy_network
+    
+  applications-postgres:
+    image: postgres:14-alpine
+    container_name: cy_applications_postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: cy_applications_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - applications_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cy_network
 
   backend:
     build:
@@ -33,14 +50,15 @@ services:
       - SPRING_R2DBC_USERNAME=postgres
       - SPRING_R2DBC_PASSWORD=postgres
     depends_on:
-      postgres:
+      auth-postgres:
         condition: service_healthy
     networks:
-      - cy_auth_network
+      - cy_network
 
 networks:
-  cy_auth_network:
+  cy_network:
     driver: bridge
 
 volumes:
-  postgres_data:
+  auth_postgres_data:
+  applications_postgres_data:

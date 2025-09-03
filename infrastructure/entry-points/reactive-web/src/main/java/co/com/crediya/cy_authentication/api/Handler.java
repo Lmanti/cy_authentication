@@ -12,17 +12,20 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import co.com.crediya.cy_authentication.api.dto.CreateUserDTO;
 import co.com.crediya.cy_authentication.api.dto.EditUserDTO;
 import co.com.crediya.cy_authentication.api.mapper.UserDTOMapper;
-import co.com.crediya.cy_authentication.usecase.user.IUserUseCase;
+import co.com.crediya.cy_authentication.usecase.idtype.IdTypeUseCase;
+import co.com.crediya.cy_authentication.usecase.role.RoleUseCase;
+import co.com.crediya.cy_authentication.usecase.user.UserUseCase;
 import reactor.core.publisher.Mono;
 
 @Component
 @RequiredArgsConstructor
 public class Handler {
-    private final IUserUseCase userUseCase;
+    private final UserUseCase userUseCase;
+    private final IdTypeUseCase idTypeUseCase;
+    private final RoleUseCase roleUseCase;
     private final UserDTOMapper userMapper;
 
     public Mono<ServerResponse> getAllUsers(ServerRequest serverRequest) {
-        System.out.println("LLega al controller");
         return userUseCase.getAllUsers().collectList()
             .flatMap(userList -> ServerResponse.ok().bodyValue(userMapper.toResponseList(userList)));
     }
@@ -33,22 +36,30 @@ public class Handler {
             .transform(userMono -> userUseCase.editUser(userMono))
             .flatMap(updatedUser -> ServerResponse.ok()
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(userMapper.toResponse(updatedUser)))
-            .switchIfEmpty(ServerResponse.notFound().build());
+                .bodyValue(userMapper.toResponse(updatedUser)));
     }
 
     public Mono<ServerResponse> createUser(ServerRequest serverRequest) {
         return serverRequest.bodyToMono(CreateUserDTO.class)
             .map(userMapper::toModel)
             .transform(userMono -> userUseCase.saveUser(userMono))
-            .flatMap(createdUser -> ServerResponse.created(URI.create("/userDetails/" + createdUser.getIdNumber()))
+            .flatMap(createdUser -> ServerResponse.created(URI.create("/userDetails/" + createdUser.idNumber()))
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(userMapper.toResponse(createdUser)))
-            .switchIfEmpty(ServerResponse.notFound().build());
+                .bodyValue(userMapper.toResponse(createdUser)));
     }
 
     public Mono<ServerResponse> deleteUser(ServerRequest serverRequest) {
         return userUseCase.deleteUser(Long.parseLong(serverRequest.pathVariable("idNumber")))
             .then(ServerResponse.ok().build());
+    }
+
+    public Mono<ServerResponse> getAllIdTypes(ServerRequest serverRequest) {
+        return idTypeUseCase.getAllIdTypes().collectList()
+            .flatMap(idTypeList -> ServerResponse.ok().bodyValue(idTypeList));
+    }
+
+    public Mono<ServerResponse> getAllRoles(ServerRequest serverRequest) {
+        return roleUseCase.getAllRoles().collectList()
+            .flatMap(rolesList -> ServerResponse.ok().bodyValue(rolesList));
     }
 }

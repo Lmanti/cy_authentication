@@ -1,19 +1,25 @@
 package co.com.crediya.cy_authentication.usecase.user;
 
-import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import co.com.crediya.cy_authentication.exception.InvalidUserDataException;
+import co.com.crediya.cy_authentication.model.idtype.IdType;
+import co.com.crediya.cy_authentication.model.idtype.gateways.IdTypeRepository;
+import co.com.crediya.cy_authentication.model.role.Role;
+import co.com.crediya.cy_authentication.model.role.gateways.RoleRepository;
 import co.com.crediya.cy_authentication.model.user.User;
 import co.com.crediya.cy_authentication.model.user.gateways.UserRepository;
+import co.com.crediya.cy_authentication.model.user.record.UserRecord;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RequiredArgsConstructor
-public class UserUseCase implements IUserUseCase {
+public class UserUseCase {
     private final UserRepository userRepository;
+    private final IdTypeRepository idTypeRepository;
+    private final RoleRepository roleRepository;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
         "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$"
@@ -25,27 +31,119 @@ public class UserUseCase implements IUserUseCase {
         CREATE, UPDATE
     }
 
-    @Override
-    public Mono<User> saveUser(Mono<User> user) {
-        return userRepository.saveUser(validateUserUniqueness(validateUserData(user), Mode.CREATE));
+    public Mono<UserRecord> saveUser(Mono<User> user) {
+        return user.flatMap(toSave ->
+            idTypeRepository.getIdTypeById(toSave.getIdTypeId())
+                .zipWith(roleRepository.getRoleById(toSave.getRoleId()))
+                .flatMap(params -> {
+                    IdType idType = params.getT1();
+                    Role role = params.getT2();
+
+                    if (idType == null) {
+                        return Mono.error(new InvalidUserDataException("No existe un tipo identificación con id " + toSave.getIdTypeId()));
+                    }
+                    if (role == null) {
+                        return Mono.error(new InvalidUserDataException("No existe un rol con id " + toSave.getRoleId()));
+                    }
+
+                    return userRepository.saveUser(validateUserUniqueness(validateUserData(Mono.just(toSave)), Mode.CREATE))
+                        .map(savedUser -> new UserRecord(
+                            savedUser.getId(),
+                            savedUser.getIdNumber(),
+                            idType,
+                            savedUser.getName(),
+                            savedUser.getLastname(),
+                            savedUser.getBirthDate(),
+                            savedUser.getAddress(),
+                            savedUser.getPhone(),
+                            savedUser.getEmail(),
+                            savedUser.getBaseSalary(),
+                            role,
+                            savedUser.getPassword()));
+                })
+        );
     }
 
-    @Override
-    public Flux<User> getAllUsers() {
-        return userRepository.getAllUsers();
+    public Flux<UserRecord> getAllUsers() {
+        return Flux.zip(
+            idTypeRepository.getAllIdTypes().collectMap(IdType::getId),
+            roleRepository.getAllRoles().collectMap(Role::getId))
+            .flatMap(params -> {
+                Map<Integer, IdType> idTypeMap = params.getT1();
+                Map<Integer, Role> roleMap = params.getT2();
+
+                return userRepository.getAllUsers()
+                    .map(user -> new UserRecord(
+                        user.getId(),
+                        user.getIdNumber(),
+                        idTypeMap.get(user.getIdTypeId()),
+                        user.getName(),
+                        user.getLastname(),
+                        user.getBirthDate(),
+                        user.getAddress(),
+                        user.getPhone(),
+                        user.getEmail(),
+                        user.getBaseSalary(),
+                        roleMap.get(user.getRoleId()),
+                        user.getPassword()));
+            });
     }
 
-    @Override
-    public Mono<User> getByIdNumber(Long idNumber) {
-        return userRepository.getByIdNumber(idNumber);
+    public Mono<UserRecord> getByIdNumber(Long idNumber) {
+        return userRepository.getByIdNumber(idNumber)
+            .flatMap(user ->
+                idTypeRepository.getIdTypeById(user.getIdTypeId())
+                    .zipWith(roleRepository.getRoleById(user.getRoleId()))
+                    .map(params -> new UserRecord(
+                        user.getId(),
+                        user.getIdNumber(),
+                        params.getT1(),
+                        user.getName(),
+                        user.getLastname(),
+                        user.getBirthDate(),
+                        user.getAddress(),
+                        user.getPhone(),
+                        user.getEmail(),
+                        user.getBaseSalary(),
+                        params.getT2(),
+                        user.getPassword()
+                    ))
+        );
     }
 
-    @Override
-    public Mono<User> editUser(Mono<User> user) {
-        return userRepository.editUser(validateUserUniqueness(validateUserData(user), Mode.UPDATE));
+    public Mono<UserRecord> editUser(Mono<User> user) {
+        return user.flatMap(toEdit ->
+            idTypeRepository.getIdTypeById(toEdit.getIdTypeId())
+                .zipWith(roleRepository.getRoleById(toEdit.getRoleId()))
+                .flatMap(params -> {
+                    IdType idType = params.getT1();
+                    Role role = params.getT2();
+
+                    if (idType.equals(null)) {
+                        return Mono.error(new InvalidUserDataException("No existe un tipo identificación con id " + toEdit.getIdTypeId()));
+                    }
+                    if (role.equals(null)) {
+                        return Mono.error(new InvalidUserDataException("No existe un rol con id " + toEdit.getRoleId()));
+                    }
+
+                    return userRepository.editUser(validateUserUniqueness(validateUserData(Mono.just(toEdit)), Mode.UPDATE))
+                        .map(updatedUser -> new UserRecord(
+                            updatedUser.getId(),
+                            updatedUser.getIdNumber(),
+                            idType,
+                            updatedUser.getName(),
+                            updatedUser.getLastname(),
+                            updatedUser.getBirthDate(),
+                            updatedUser.getAddress(),
+                            updatedUser.getPhone(),
+                            updatedUser.getEmail(),
+                            updatedUser.getBaseSalary(),
+                            role,
+                            updatedUser.getPassword()));
+                })
+        );
     }
 
-    @Override
     public Mono<Void> deleteUser(Long idNumber) {
         return userRepository.deleteUser(idNumber);
     }
@@ -81,10 +179,6 @@ public class UserUseCase implements IUserUseCase {
                     String.format("El salario base debe estar entre %,.2f y %,.2f", MIN_SALARY, MAX_SALARY)));
             }
 
-            if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
-                return Mono.error(new InvalidUserDataException("El username es requerido"));
-            }
-
             if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
                 return Mono.error(new InvalidUserDataException("La contraseña es requerida"));
             }
@@ -96,39 +190,27 @@ public class UserUseCase implements IUserUseCase {
     private Mono<User> validateUserUniqueness(Mono<User> userMono, Mode mode) {
         return userMono.flatMap(user -> 
             userRepository.findByEmailOrIdNumber(user.getEmail(), user.getIdNumber())
-                .collectList()
-                .flatMap(existingUsers -> {
-                    List<User> conflictingUsers = existingUsers.stream()
-                        .filter(existingUser -> {
-                            // Si es el mismo usuario (update), no hay conflicto
-                            if (existingUser.getIdNumber().equals(user.getIdNumber()) && 
-                                existingUser.getEmail().equals(user.getEmail()) && mode.equals(Mode.UPDATE)) {
-                                return false;
-                            }
-                            
-                            // Si tiene el mismo email o el mismo idNumber, puede haber conflicto
-                            return existingUser.getEmail().equals(user.getEmail()) || 
-                                existingUser.getIdNumber().equals(user.getIdNumber());
-                        })
-                        .collect(Collectors.toList());
-                    
-                    if (conflictingUsers.isEmpty()) {
-                        return Mono.just(user);
+                .flatMap(existingUser -> {
+                    Boolean existingEmail = existingUser.getEmail().equals(user.getEmail());
+                    Boolean existingIdNumber = existingUser.getIdNumber().equals(user.getIdNumber());
+
+                    if (existingEmail && existingIdNumber && mode.equals(Mode.CREATE)) {
+                        return Mono.error(new InvalidUserDataException("El correo electrónico y el número de identificación ya han sido registrados por otro usuario"));
+                    } else if (!existingEmail && !existingIdNumber && mode.equals(Mode.UPDATE)) {
+                        return Mono.error(new InvalidUserDataException("No se pueden cambiar el correo electrónico ni el número de identificación que ya han sido registrados por el usuario"));
+                    } else if (existingEmail && mode.equals(Mode.CREATE)) {
+                        return Mono.error(new InvalidUserDataException("El correo electrónico ya ha sido registrado por otro usuario"));
+                    } else if (existingIdNumber && mode.equals(Mode.CREATE)) {
+                        return Mono.error(new InvalidUserDataException("El número de identificación ya ha sido registrado por otro usuario"));
+                    } else if (!existingEmail && existingIdNumber && mode.equals(Mode.UPDATE)) {
+                        return Mono.error(new InvalidUserDataException("No se puede cambiar el correo electrónico registrado por el usuario"));
+                    } else if (existingEmail && !existingIdNumber && mode.equals(Mode.UPDATE)) {
+                        return Mono.error(new InvalidUserDataException("No se puede cambiar el número de identificación registrado por el usuario"));
+                    } else {
+                        return Mono.just(existingUser);
                     }
-                    
-                    for (User conflictingUser : conflictingUsers) {
-                        if (conflictingUser.getEmail().equals(user.getEmail())) {
-                            return Mono.error(new InvalidUserDataException(
-                                "El correo electrónico ya está registrado por otro usuario"));
-                        }
-                        if (conflictingUser.getIdNumber().equals(user.getIdNumber())) {
-                            return Mono.error(new InvalidUserDataException(
-                                "El número de identificación ya está registrado por otro usuario"));
-                        }
-                    }
-                    
-                    return Mono.just(user);
                 })
+                .switchIfEmpty(Mono.defer(() -> Mono.just(user)))
         );
     }
 }
