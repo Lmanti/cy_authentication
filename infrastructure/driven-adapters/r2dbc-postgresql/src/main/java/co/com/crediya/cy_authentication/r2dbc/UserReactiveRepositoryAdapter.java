@@ -106,6 +106,8 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                     existingEntity.setPhone(userData.getPhone());
                     existingEntity.setEmail(userData.getEmail());
                     existingEntity.setBaseSalary(userData.getBaseSalary());
+                    existingEntity.setRoleId(userData.getRoleId());
+                    existingEntity.setPassword(userData.getPassword());
                     
                     log.debug("Saving updated user entity");
                     return repository.save(existingEntity);

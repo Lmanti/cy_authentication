@@ -1,5 +1,7 @@
 package co.com.crediya.cy_authentication.config;
 
+import co.com.crediya.cy_authentication.model.idtype.gateways.IdTypeRepository;
+import co.com.crediya.cy_authentication.model.role.gateways.RoleRepository;
 import co.com.crediya.cy_authentication.model.user.gateways.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -41,6 +43,16 @@ public class UseCasesConfigTest {
         @Bean
         public UserRepository userRepository() {
             return Mockito.mock(UserRepository.class);
+        }
+
+        @Bean
+        public IdTypeRepository idTypeRepository() {
+            return Mockito.mock(IdTypeRepository.class);
+        }
+
+        @Bean
+        public RoleRepository roleRepository() {
+            return Mockito.mock(RoleRepository.class);
         }
     }
 

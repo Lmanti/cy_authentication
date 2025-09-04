@@ -32,36 +32,33 @@ public class UserUseCase {
     }
 
     public Mono<UserRecord> saveUser(Mono<User> user) {
-        return user.flatMap(toSave ->
-            idTypeRepository.getIdTypeById(toSave.getIdTypeId())
-                .zipWith(roleRepository.getRoleById(toSave.getRoleId()))
-                .flatMap(params -> {
-                    IdType idType = params.getT1();
-                    Role role = params.getT2();
+        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate)))
+            .flatMap(validUser -> validateUserUniqueness(Mono.just(validUser), Mode.CREATE))
+            .flatMap(toSave -> 
+                idTypeRepository.getIdTypeById(toSave.getIdTypeId())
+                    .switchIfEmpty(Mono.error(new InvalidUserDataException("No existe un tipo identificación con id " + toSave.getIdTypeId())))
+                    .zipWith(roleRepository.getRoleById(toSave.getRoleId())
+                        .switchIfEmpty(Mono.error(new InvalidUserDataException("No existe un rol con id " + toSave.getRoleId()))))
+                    .flatMap(params -> {
+                        IdType idType = params.getT1();
+                        Role role = params.getT2();
 
-                    if (idType == null) {
-                        return Mono.error(new InvalidUserDataException("No existe un tipo identificación con id " + toSave.getIdTypeId()));
-                    }
-                    if (role == null) {
-                        return Mono.error(new InvalidUserDataException("No existe un rol con id " + toSave.getRoleId()));
-                    }
-
-                    return userRepository.saveUser(validateUserUniqueness(validateUserData(Mono.just(toSave)), Mode.CREATE))
-                        .map(savedUser -> new UserRecord(
-                            savedUser.getId(),
-                            savedUser.getIdNumber(),
-                            idType,
-                            savedUser.getName(),
-                            savedUser.getLastname(),
-                            savedUser.getBirthDate(),
-                            savedUser.getAddress(),
-                            savedUser.getPhone(),
-                            savedUser.getEmail(),
-                            savedUser.getBaseSalary(),
-                            role,
-                            savedUser.getPassword()));
-                })
-        );
+                        return userRepository.saveUser(Mono.just(toSave))
+                            .map(savedUser -> new UserRecord(
+                                savedUser.getId(),
+                                savedUser.getIdNumber(),
+                                idType,
+                                savedUser.getName(),
+                                savedUser.getLastname(),
+                                savedUser.getBirthDate(),
+                                savedUser.getAddress(),
+                                savedUser.getPhone(),
+                                savedUser.getEmail(),
+                                savedUser.getBaseSalary(),
+                                role,
+                                savedUser.getPassword()));
+                    })
+            );
     }
 
     public Flux<UserRecord> getAllUsers() {
@@ -112,36 +109,33 @@ public class UserUseCase {
     }
 
     public Mono<UserRecord> editUser(Mono<User> user) {
-        return user.flatMap(toEdit ->
-            idTypeRepository.getIdTypeById(toEdit.getIdTypeId())
-                .zipWith(roleRepository.getRoleById(toEdit.getRoleId()))
-                .flatMap(params -> {
-                    IdType idType = params.getT1();
-                    Role role = params.getT2();
+        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate)))
+            .flatMap(validUser -> validateUserUniqueness(Mono.just(validUser), Mode.UPDATE))
+            .flatMap(toEdit -> 
+                idTypeRepository.getIdTypeById(toEdit.getIdTypeId())
+                    .switchIfEmpty(Mono.error(new InvalidUserDataException("No existe un tipo identificación con id " + toEdit.getIdTypeId())))
+                    .zipWith(roleRepository.getRoleById(toEdit.getRoleId())
+                        .switchIfEmpty(Mono.error(new InvalidUserDataException("No existe un rol con id " + toEdit.getRoleId()))))
+                    .flatMap(params -> {
+                        IdType idType = params.getT1();
+                        Role role = params.getT2();
 
-                    if (idType.equals(null)) {
-                        return Mono.error(new InvalidUserDataException("No existe un tipo identificación con id " + toEdit.getIdTypeId()));
-                    }
-                    if (role.equals(null)) {
-                        return Mono.error(new InvalidUserDataException("No existe un rol con id " + toEdit.getRoleId()));
-                    }
-
-                    return userRepository.editUser(validateUserUniqueness(validateUserData(Mono.just(toEdit)), Mode.UPDATE))
-                        .map(updatedUser -> new UserRecord(
-                            updatedUser.getId(),
-                            updatedUser.getIdNumber(),
-                            idType,
-                            updatedUser.getName(),
-                            updatedUser.getLastname(),
-                            updatedUser.getBirthDate(),
-                            updatedUser.getAddress(),
-                            updatedUser.getPhone(),
-                            updatedUser.getEmail(),
-                            updatedUser.getBaseSalary(),
-                            role,
-                            updatedUser.getPassword()));
-                })
-        );
+                        return userRepository.editUser(Mono.just(toEdit))
+                            .map(updatedUser -> new UserRecord(
+                                updatedUser.getId(),
+                                updatedUser.getIdNumber(),
+                                idType,
+                                updatedUser.getName(),
+                                updatedUser.getLastname(),
+                                updatedUser.getBirthDate(),
+                                updatedUser.getAddress(),
+                                updatedUser.getPhone(),
+                                updatedUser.getEmail(),
+                                updatedUser.getBaseSalary(),
+                                role,
+                                updatedUser.getPassword()));
+                    })
+            );
     }
 
     public Mono<Void> deleteUser(Long idNumber) {
@@ -207,7 +201,7 @@ public class UserUseCase {
                     } else if (existingEmail && !existingIdNumber && mode.equals(Mode.UPDATE)) {
                         return Mono.error(new InvalidUserDataException("No se puede cambiar el número de identificación registrado por el usuario"));
                     } else {
-                        return Mono.just(existingUser);
+                        return Mono.just(mode.equals(Mode.UPDATE) ? user : existingUser);
                     }
                 })
                 .switchIfEmpty(Mono.defer(() -> Mono.just(user)))
