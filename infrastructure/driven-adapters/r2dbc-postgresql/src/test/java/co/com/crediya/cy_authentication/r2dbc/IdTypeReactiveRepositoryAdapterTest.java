@@ -9,7 +9,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.transaction.reactive.TransactionalOperator;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -19,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class IdTypeReactiveRepositoryAdapterTest {
 
     @Mock
@@ -27,14 +32,23 @@ class IdTypeReactiveRepositoryAdapterTest {
     @Mock
     private ObjectMapper mapper;
 
+    @Mock
+    private TransactionalOperator readOnlyTransactional;
+
     private IdTypeReactiveRepositoryAdapter adapter;
 
     private IdType validIdType;
     private IdTypeEntity validIdTypeEntity;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
-        adapter = new IdTypeReactiveRepositoryAdapter(repository, mapper);
+        when(readOnlyTransactional.transactional(any(Flux.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(readOnlyTransactional.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        adapter = new IdTypeReactiveRepositoryAdapter(repository, mapper, readOnlyTransactional);
 
         validIdType = IdType.builder()
                 .id(1)

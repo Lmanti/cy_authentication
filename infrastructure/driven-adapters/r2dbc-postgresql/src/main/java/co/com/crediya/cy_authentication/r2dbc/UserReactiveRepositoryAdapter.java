@@ -3,8 +3,9 @@ package co.com.crediya.cy_authentication.r2dbc;
 import java.math.BigInteger;
 
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.reactive.TransactionalOperator;
 
 import co.com.crediya.cy_authentication.exception.DataPersistenceException;
 import co.com.crediya.cy_authentication.exception.DataRetrievalException;
@@ -26,12 +27,21 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     UserReactiveRepository
 > implements UserRepository {
 
-    public UserReactiveRepositoryAdapter(UserReactiveRepository repository, ObjectMapper mapper) {
+    private final TransactionalOperator writeTransactional;
+    private final TransactionalOperator readOnlyTransactional;
+
+    public UserReactiveRepositoryAdapter(
+        UserReactiveRepository repository,
+        ObjectMapper mapper,
+        TransactionalOperator transactionalOperator,
+        @Qualifier("readOnlyTransactionalOperator") TransactionalOperator readOnlyTransactional
+    ) {
         super(repository, mapper, d -> mapper.map(d, User.class));
+        this.writeTransactional = transactionalOperator;
+        this.readOnlyTransactional = readOnlyTransactional;
     }
 
     @Override
-    @Transactional(rollbackFor = DataPersistenceException.class)
     public Mono<User> saveUser(Mono<User> user) {
         return user
             .doOnNext(userData -> log.info("Attempting to save user: {}", userData.getIdNumber()))
@@ -44,11 +54,11 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                         log.error("Error saving user: {}", ex.getMessage(), ex);
                         return new DataPersistenceException("Error intentando guardar el usuario", ex);
                     })
-            );
+            )
+            .as(writeTransactional::transactional);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Flux<User> getAllUsers() {
         log.info("Retrieving all users");
     
@@ -59,11 +69,11 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 log.error("Error retrieving all users", ex);
                 return new DataRetrievalException("Error al momento de consultar los usuarios", ex);
             })
-            .doOnError(ex -> log.error("Failed to retrieve users", ex));
+            .doOnError(ex -> log.error("Failed to retrieve users", ex))
+            .as(readOnlyTransactional::transactional); 
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Mono<User> getByIdNumber(Long idNumber) {
         log.info("Searching for user with ID number: {}", idNumber);
     
@@ -81,11 +91,11 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 }
                 log.error("Error retrieving user with ID number {}: {}", idNumber, ex.getMessage(), ex);
                 return new DataRetrievalException("Error consultando usuario con identificación " + idNumber, ex);
-            });
+            })
+            .as(readOnlyTransactional::transactional); 
     }
 
     @Override
-    @Transactional(rollbackFor = DataPersistenceException.class)
     public Mono<User> editUser(Mono<User> user) {
         return user
             .doOnNext(userData -> log.info("Attempting to edit user with ID: {}", userData.getIdNumber()))
@@ -97,17 +107,7 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 .flatMap(existingEntity -> {
                     log.debug("Found existing user: {}", existingEntity.getIdNumber());
 
-                    existingEntity.setIdNumber(userData.getIdNumber());
-                    existingEntity.setIdTypeId(userData.getIdTypeId());
-                    existingEntity.setName(userData.getName());
-                    existingEntity.setLastname(userData.getLastname());
-                    existingEntity.setBirthDate(userData.getBirthDate());
-                    existingEntity.setAddress(userData.getAddress());
-                    existingEntity.setPhone(userData.getPhone());
-                    existingEntity.setEmail(userData.getEmail());
-                    existingEntity.setBaseSalary(userData.getBaseSalary());
-                    existingEntity.setRoleId(userData.getRoleId());
-                    existingEntity.setPassword(userData.getPassword());
+                    updateEntityFields(existingEntity, userData);
                     
                     log.debug("Saving updated user entity");
                     return repository.save(existingEntity);
@@ -121,11 +121,11 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                     log.error("Error updating user: {}", ex.getMessage(), ex);
                     return new DataPersistenceException("Error intentando actualizar el usuario", ex);
                 })
-            );
+            )
+            .as(writeTransactional::transactional);
     }
 
     @Override
-    @Transactional
     public Mono<Void> deleteUser(Long idNumber) {
         log.info("Attempting to delete user with ID number: {}", idNumber);
     
@@ -146,11 +146,11 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 }
                 log.error("Error deleting user with ID number {}: {}", idNumber, ex.getMessage(), ex);
                 return new DataPersistenceException("Error intentando eliminar el usuario con número de identificación " + idNumber, ex);
-            });
+            })
+            .as(writeTransactional::transactional);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Mono<User> getByEmail(String email) {
         log.info("Searching for user with email: {}", email);
     
@@ -168,11 +168,11 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 }
                 log.error("Error retrieving user with email {}: {}", email, ex.getMessage(), ex);
                 return new DataRetrievalException("Error consultando usuario con email " + email, ex);
-            });
+            })
+            .as(readOnlyTransactional::transactional); 
     }
     
     @Override
-    @Transactional(readOnly = true)
     public Mono<User> findByEmailOrIdNumber(String email, Long idNumber) {
         log.info("Starting search for users with email: {} OR idNumber: {}", email, idNumber);
         
@@ -192,7 +192,22 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
             .onErrorMap(ex -> {
                 log.error("Error retrieving user with email {} or idNumber {}: {}", email, idNumber, ex.getMessage(), ex);
                 return new DataRetrievalException("Error consultando usuario con email " + email + "o número de identificación " + idNumber, ex);
-            });
+            })
+            .as(readOnlyTransactional::transactional); 
+    }
+
+    private void updateEntityFields(UserEntity existingEntity, User userData) {
+        existingEntity.setIdNumber(userData.getIdNumber());
+        existingEntity.setIdTypeId(userData.getIdTypeId());
+        existingEntity.setName(userData.getName());
+        existingEntity.setLastname(userData.getLastname());
+        existingEntity.setBirthDate(userData.getBirthDate());
+        existingEntity.setAddress(userData.getAddress());
+        existingEntity.setPhone(userData.getPhone());
+        existingEntity.setEmail(userData.getEmail());
+        existingEntity.setBaseSalary(userData.getBaseSalary());
+        existingEntity.setRoleId(userData.getRoleId());
+        existingEntity.setPassword(userData.getPassword());
     }
 
 }

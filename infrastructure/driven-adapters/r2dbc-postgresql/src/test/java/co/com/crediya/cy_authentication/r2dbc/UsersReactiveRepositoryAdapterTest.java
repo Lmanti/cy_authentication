@@ -11,7 +11,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.transaction.reactive.TransactionalOperator;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -25,6 +29,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class UsersReactiveRepositoryAdapterTest {
 
     @Mock
@@ -33,14 +38,31 @@ class UsersReactiveRepositoryAdapterTest {
     @Mock
     private ObjectMapper mapper;
 
+    @Mock
+    private TransactionalOperator writeTransactional;
+    
+    @Mock
+    private TransactionalOperator readOnlyTransactional;
+
     private UserReactiveRepositoryAdapter adapter;
 
     private User validUser;
     private UserEntity validUserEntity;
 
+    @SuppressWarnings("unchecked")
     @BeforeEach
     void setUp() {
-        adapter = new UserReactiveRepositoryAdapter(repository, mapper);
+        when(writeTransactional.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(writeTransactional.transactional(any(Flux.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        
+        when(readOnlyTransactional.transactional(any(Mono.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(readOnlyTransactional.transactional(any(Flux.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+                
+        adapter = new UserReactiveRepositoryAdapter(repository, mapper, writeTransactional, readOnlyTransactional);
 
         validUser = User.builder()
                 .id(BigInteger.valueOf(1))

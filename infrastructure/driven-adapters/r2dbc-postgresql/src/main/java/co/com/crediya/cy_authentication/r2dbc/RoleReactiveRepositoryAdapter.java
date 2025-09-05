@@ -1,8 +1,10 @@
 package co.com.crediya.cy_authentication.r2dbc;
 
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.reactive.TransactionalOperator;
 
 import co.com.crediya.cy_authentication.exception.DataRetrievalException;
 import co.com.crediya.cy_authentication.model.role.Role;
@@ -22,8 +24,15 @@ public class RoleReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     RoleReactiveReository
 > implements RoleRepository {
 
-    public RoleReactiveRepositoryAdapter(RoleReactiveReository repository, ObjectMapper mapper) {
+    private final TransactionalOperator readOnlyTransactional;
+
+    public RoleReactiveRepositoryAdapter(
+        RoleReactiveReository repository,
+        ObjectMapper mapper,
+        @Qualifier("readOnlyTransactionalOperator") TransactionalOperator readOnlyTransactional
+    ) {
         super(repository, mapper, d -> mapper.map(d, Role.class));
+        this.readOnlyTransactional = readOnlyTransactional;
     }
 
     @Override
@@ -39,7 +48,8 @@ public class RoleReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 log.error("Error retrieving all roles", ex);
                 return new DataRetrievalException("Error al momento de consultar los roles", ex);
             })
-            .doOnError(ex -> log.error("Failed to retrieve all the roles", ex));
+            .doOnError(ex -> log.error("Failed to retrieve all the roles", ex))
+            .as(readOnlyTransactional::transactional);
     }
 
     @Override
@@ -54,7 +64,8 @@ public class RoleReactiveRepositoryAdapter extends ReactiveAdapterOperations<
             .onErrorMap(ex -> {
                 log.error("Error retrieving role with ID number {}: {}", roleId, ex.getMessage(), ex);
                 return new DataRetrievalException("Error consultando rol con ID " + roleId, ex);
-            });
+            })
+            .as(readOnlyTransactional::transactional);
     }
     
 }
