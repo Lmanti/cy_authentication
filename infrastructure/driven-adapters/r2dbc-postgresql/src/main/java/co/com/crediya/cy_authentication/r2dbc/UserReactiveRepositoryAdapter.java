@@ -196,6 +196,17 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
             .as(readOnlyTransactional::transactional); 
     }
 
+    @Override
+    public Mono<Boolean> existByIdNumber(Long idNumber) {
+        log.info("Starting search for users with idNumber: {}", idNumber);
+        return repository.existsByIdNumber(idNumber)
+            .onErrorMap(ex -> {
+                log.error("Error retrieving user with idNumber {}", idNumber, ex.getMessage(), ex);
+                return new DataRetrievalException("Error consultando usuario con número de identificación " + idNumber, ex);
+            })
+            .as(readOnlyTransactional::transactional);
+    }
+
     private void updateEntityFields(UserEntity existingEntity, User userData) {
         existingEntity.setIdNumber(userData.getIdNumber());
         existingEntity.setIdTypeId(userData.getIdTypeId());

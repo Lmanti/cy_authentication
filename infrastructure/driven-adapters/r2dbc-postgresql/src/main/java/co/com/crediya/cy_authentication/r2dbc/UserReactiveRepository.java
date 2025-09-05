@@ -12,4 +12,5 @@ public interface UserReactiveRepository extends ReactiveCrudRepository<UserEntit
     Mono<UserEntity> findByIdNumber(Long idNumber);
     Mono<UserEntity> findByEmail(String email);
     Mono<UserEntity> findByEmailOrIdNumber(String email, Long idNumber);
+    Mono<Boolean> existsByIdNumber(Long idNumber);
 }

@@ -53,6 +53,11 @@ public class Handler {
             .then(ServerResponse.ok().build());
     }
 
+    public Mono<ServerResponse> existsByIdNumber(ServerRequest serverRequest) {
+        return userUseCase.existByIdNumber(Long.parseLong(serverRequest.pathVariable("idNumber")))
+            .flatMap(exists -> ServerResponse.ok().bodyValue(exists));
+    } 
+
     public Mono<ServerResponse> getAllIdTypes(ServerRequest serverRequest) {
         return idTypeUseCase.getAllIdTypes().collectList()
             .flatMap(idTypeList -> ServerResponse.ok().bodyValue(idTypeList));

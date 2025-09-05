@@ -142,6 +142,10 @@ public class UserUseCase {
         return userRepository.deleteUser(idNumber);
     }
 
+    public Mono<Boolean> existByIdNumber(Long idNumber) {
+        return userRepository.existByIdNumber(idNumber);
+    }
+
     private Mono<User> validateUserData(Mono<User> userMono) {
         return userMono.flatMap(user -> {
             if (user.getIdNumber() == null || user.getIdNumber().equals(0L)) {

@@ -133,6 +133,31 @@ public class RouterRest {
             )
         ),
         @RouterOperation(
+            path = userBaseRoute + "/exists/{idNumber}", 
+            method = RequestMethod.GET,
+            operation = @Operation(
+                operationId = "existsByIdNumber",
+                tags = {"Usuarios"},
+                summary = "Valida si existe un usuario",
+                description = "Valida si existe un usuario por su número de identificación",
+                parameters = {
+                    @Parameter(
+                        name = "idNumber", 
+                        description = "Número de identificación del usuario",
+                        in = ParameterIn.PATH,
+                        required = true,
+                        schema = @Schema(type = "integer", format = "int64")
+                    )
+                },
+                responses = {
+                    @ApiResponse(
+                        responseCode = "200", 
+                        description = "Validación exitosa"
+                    )
+                }
+            )
+        ),
+        @RouterOperation(
             path = userBaseRoute + idTypesBaseRoute, 
             method = RequestMethod.GET,
             operation = @Operation(
@@ -172,6 +197,7 @@ public class RouterRest {
             .andRoute(POST(userBaseRoute), handler::createUser)
             .andRoute(PUT(userBaseRoute), handler::updateUser)
             .andRoute(DELETE(userBaseRoute.concat("/{idNumber}")), handler::deleteUser)
+            .andRoute(GET(userBaseRoute.concat("/exists/{idNumber}")), handler::existsByIdNumber)
             .andRoute(GET(userBaseRoute + idTypesBaseRoute), handler::getAllIdTypes)
             .andRoute(GET(userBaseRoute + rolesBaseRoute), handler::getAllRoles);
     }

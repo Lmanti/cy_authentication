@@ -12,4 +12,5 @@ public interface UserRepository {
     Mono<User> editUser(Mono<User> user);
     Mono<Void> deleteUser(Long idNumber);
     Mono<User> findByEmailOrIdNumber(String email, Long idNumber);
+    Mono<Boolean> existByIdNumber(Long idNumber);
 }
