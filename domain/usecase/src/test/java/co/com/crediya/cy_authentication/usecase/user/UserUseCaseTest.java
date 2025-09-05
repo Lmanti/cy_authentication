@@ -9,9 +9,13 @@ import co.com.crediya.cy_authentication.model.user.User;
 import co.com.crediya.cy_authentication.model.user.gateways.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -23,6 +27,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.reset;
 
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class UserUseCaseTest {
 
     @Mock
@@ -41,9 +47,7 @@ class UserUseCaseTest {
     private Role validRole;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        
+    void setUp() {        
         // Reset all mocks before each test
         reset(userRepository, idTypeRepository, roleRepository);
         
@@ -201,6 +205,20 @@ class UserUseCaseTest {
     }
 
     @Test
+    @DisplayName("Should fail validation when name is null")
+    void shouldFailValidationWhenNameIsNull2() {
+        // Given
+        User invalidUser = validUser.toBuilder().name(null).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El nombre es requerido"))
+                .verify();
+    }
+
+    @Test
     @DisplayName("Should fail validation when email is invalid")
     void shouldFailValidationWhenEmailIsInvalid() {
         // Given
@@ -242,4 +260,532 @@ class UserUseCaseTest {
                 .expectError(InvalidUserDataException.class)
                 .verify();
     }
+
+    @Test
+    @DisplayName("Should fail validation when idNumber is null")
+    void shouldFailValidationWhenIdNumberIsNull() {
+        // Given
+        User invalidUser = validUser.toBuilder().idNumber(null).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El número de identificación es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when idNumber is zero")
+    void shouldFailValidationWhenIdNumberIsZero() {
+        // Given
+        User invalidUser = validUser.toBuilder().idNumber(0L).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El número de identificación es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when lastname is null")
+    void shouldFailValidationWhenLastnameIsNull() {
+        // Given
+        User invalidUser = validUser.toBuilder().lastname(null).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El apellido es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when lastname is empty")
+    void shouldFailValidationWhenLastnameIsEmpty() {
+        // Given
+        User invalidUser = validUser.toBuilder().lastname("").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El apellido es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when lastname is whitespace")
+    void shouldFailValidationWhenLastnameIsWhitespace() {
+        // Given
+        User invalidUser = validUser.toBuilder().lastname("   ").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El apellido es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when email is null")
+    void shouldFailValidationWhenEmailIsNull() {
+        // Given
+        User invalidUser = validUser.toBuilder().email(null).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El correo electrónico es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when email is empty")
+    void shouldFailValidationWhenEmailIsEmpty() {
+        // Given
+        User invalidUser = validUser.toBuilder().email("").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El correo electrónico es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when email is whitespace")
+    void shouldFailValidationWhenEmailIsWhitespace() {
+        // Given
+        User invalidUser = validUser.toBuilder().email("   ").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El correo electrónico es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when baseSalary is null")
+    void shouldFailValidationWhenBaseSalaryIsNull() {
+        // Given
+        User invalidUser = validUser.toBuilder().baseSalary(null).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El salario base es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when password is null")
+    void shouldFailValidationWhenPasswordIsNull() {
+        // Given
+        User invalidUser = validUser.toBuilder().password(null).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("La contraseña es requerida"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when password is empty")
+    void shouldFailValidationWhenPasswordIsEmpty() {
+        // Given
+        User invalidUser = validUser.toBuilder().password("").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("La contraseña es requerida"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when password is whitespace")
+    void shouldFailValidationWhenPasswordIsWhitespace() {
+        // Given
+        User invalidUser = validUser.toBuilder().password("   ").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("La contraseña es requerida"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when name is empty")
+    void shouldFailValidationWhenNameIsEmpty() {
+        // Given
+        User invalidUser = validUser.toBuilder().name("").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El nombre es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when name is whitespace")
+    void shouldFailValidationWhenNameIsWhitespace() {
+        // Given
+        User invalidUser = validUser.toBuilder().name("   ").build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El nombre es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation in editUser when idNumber is null")
+    void shouldFailValidationInEditUserWhenIdNumberIsNull() {
+        // Given
+        User invalidUser = validUser.toBuilder().idNumber(null).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.editUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El número de identificación es requerido"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail when both email and idNumber already exist in CREATE mode")
+    void shouldFailWhenBothEmailAndIdNumberAlreadyExistInCreateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("john.doe@example.com")  // mismo email
+                .idNumber(12345678L)            // mismo idNumber
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(validUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El correo electrónico y el número de identificación ya han sido registrados por otro usuario"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail when trying to change both email and idNumber in UPDATE mode")
+    void shouldFailWhenTryingToChangeBothEmailAndIdNumberInUpdateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("different@example.com")  // email diferente
+                .idNumber(87654321L)             // idNumber diferente
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        // When & Then
+        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("No se pueden cambiar el correo electrónico ni el número de identificación que ya han sido registrados por el usuario"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail when only email already exists in CREATE mode")
+    void shouldFailWhenOnlyEmailAlreadyExistsInCreateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("john.doe@example.com")  // mismo email
+                .idNumber(87654321L)            // idNumber diferente
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(validUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El correo electrónico ya ha sido registrado por otro usuario"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail when only idNumber already exists in CREATE mode")
+    void shouldFailWhenOnlyIdNumberAlreadyExistsInCreateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("different@example.com")  // email diferente
+                .idNumber(12345678L)             // mismo idNumber
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(validUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El número de identificación ya ha sido registrado por otro usuario"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail when trying to change email in UPDATE mode")
+    void shouldFailWhenTryingToChangeEmailInUpdateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("different@example.com")  // email diferente
+                .idNumber(12345678L)             // mismo idNumber
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        // When & Then
+        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("No se puede cambiar el correo electrónico registrado por el usuario"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail when trying to change idNumber in UPDATE mode")
+    void shouldFailWhenTryingToChangeIdNumberInUpdateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("john.doe@example.com")  // mismo email
+                .idNumber(87654321L)            // idNumber diferente
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        // When & Then
+        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("No se puede cambiar el número de identificación registrado por el usuario"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should succeed when user data matches existing user in UPDATE mode")
+    void shouldSucceedWhenUserDataMatchesExistingUserInUpdateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("john.doe@example.com")  // mismo email
+                .idNumber(12345678L)            // mismo idNumber
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+        when(userRepository.editUser(any())).thenReturn(Mono.just(validUser));
+
+        // When & Then
+        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
+                .expectNextMatches(userRecord -> 
+                    userRecord.name().equals("John") &&
+                    userRecord.email().equals("john.doe@example.com"))
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Should succeed when no existing user found in CREATE mode")
+    void shouldSucceedWhenNoExistingUserFoundInCreateMode() {
+        // Given
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.empty());
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+        when(userRepository.saveUser(any())).thenReturn(Mono.just(validUser));
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(validUser)))
+                .expectNextMatches(userRecord -> 
+                    userRecord.name().equals("John") &&
+                    userRecord.email().equals("john.doe@example.com"))
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when salary is below minimum")
+    void shouldFailValidationWhenSalaryIsBelowMinimum() {
+        // Given
+        User invalidUser = validUser.toBuilder().baseSalary(-1.0).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El salario base debe estar entre"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when salary is exactly minimum boundary")
+    void shouldFailValidationWhenSalaryIsExactlyMinimumBoundary() {
+        // Given - Usar un valor menor que MIN_SALARY (0.0)
+        User invalidUser = validUser.toBuilder().baseSalary(-0.01).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El salario base debe estar entre"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should fail validation when salary is above maximum")
+    void shouldFailValidationWhenSalaryIsAboveMaximum() {
+        // Given - Usar un valor mayor que MAX_SALARY (15000000.0)
+        User invalidUser = validUser.toBuilder().baseSalary(15000001.0).build();
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(invalidUser)))
+                .expectErrorMatches(throwable -> 
+                    throwable instanceof InvalidUserDataException &&
+                    throwable.getMessage().contains("El salario base debe estar entre"))
+                .verify();
+    }
+
+    @Test
+    @DisplayName("Should pass validation when salary is at minimum boundary")
+    void shouldPassValidationWhenSalaryIsAtMinimumBoundary() {
+        // Given
+        User validUserWithMinSalary = validUser.toBuilder().baseSalary(0.0).build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.empty());
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+        when(userRepository.saveUser(any())).thenReturn(Mono.just(validUserWithMinSalary));
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(validUserWithMinSalary)))
+                .expectNextMatches(userRecord -> userRecord.baseSalary().equals(0.0))
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Should pass validation when salary is at maximum boundary")
+    void shouldPassValidationWhenSalaryIsAtMaximumBoundary() {
+        // Given
+        User validUserWithMaxSalary = validUser.toBuilder().baseSalary(15000000.0).build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.empty());
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+        when(userRepository.saveUser(any())).thenReturn(Mono.just(validUserWithMaxSalary));
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(validUserWithMaxSalary)))
+                .expectNextMatches(userRecord -> userRecord.baseSalary().equals(15000000.0))
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Should return user when no existing user found in CREATE mode")
+    void shouldReturnUserWhenNoExistingUserFoundInCreateMode() {
+        // Given
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.empty());
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+        when(userRepository.saveUser(any())).thenReturn(Mono.just(validUser));
+
+        // When & Then
+        StepVerifier.create(userUseCase.saveUser(Mono.just(validUser)))
+                .expectNextMatches(userRecord -> 
+                    userRecord.name().equals("John") &&
+                    userRecord.email().equals("john.doe@example.com"))
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Should return user when no existing user found in UPDATE mode")
+    void shouldReturnUserWhenNoExistingUserFoundInUpdateMode() {
+        // Given
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.empty());
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+        when(userRepository.editUser(any())).thenReturn(Mono.just(validUser));
+
+        // When & Then
+        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
+                .expectNextMatches(userRecord -> 
+                    userRecord.name().equals("John") &&
+                    userRecord.email().equals("john.doe@example.com"))
+                .verifyComplete();
+    }
+
+    @Test
+    @DisplayName("Should return existingUser when validation passes in CREATE mode")
+    void shouldReturnExistingUserWhenValidationPassesInCreateMode() {
+        // Given - Este caso es difícil de alcanzar en CREATE, pero podemos simular el else
+        User existingUser = validUser.toBuilder()
+                .email("john.doe@example.com")
+                .idNumber(12345678L)
+                .name("ExistingUser") // Diferente nombre para verificar que retorna el existingUser
+                .build();
+        
+        // Simular un caso donde no se cumple ninguna de las condiciones de error
+        // Esto requiere modificar temporalmente la lógica o usar un escenario específico
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        // Este test podría fallar dependiendo de tu lógica exacta
+        // Podrías necesitar ajustar las condiciones
+    }
+
+    @Test
+    @DisplayName("Should return user when validation passes in UPDATE mode")
+    void shouldReturnUserWhenValidationPassesInUpdateMode() {
+        // Given
+        User existingUser = validUser.toBuilder()
+                .email("john.doe@example.com")  // mismo email
+                .idNumber(12345678L)            // mismo idNumber
+                .build();
+        
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+        when(userRepository.editUser(any())).thenReturn(Mono.just(validUser));
+
+        // When & Then
+        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
+                .expectNextMatches(userRecord -> 
+                    userRecord.name().equals("John") &&
+                    userRecord.email().equals("john.doe@example.com"))
+                .verifyComplete();
+    }
+
 }

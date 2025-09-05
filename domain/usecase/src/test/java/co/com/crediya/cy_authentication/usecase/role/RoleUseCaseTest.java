@@ -4,15 +4,18 @@ import co.com.crediya.cy_authentication.model.role.Role;
 import co.com.crediya.cy_authentication.model.role.gateways.RoleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RoleUseCaseTest {
 
     @Mock
@@ -25,7 +28,6 @@ class RoleUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         roleUseCase = new RoleUseCase(roleRepository);
 
         adminRole = Role.builder()

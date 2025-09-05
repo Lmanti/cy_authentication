@@ -4,15 +4,18 @@ import co.com.crediya.cy_authentication.model.idtype.IdType;
 import co.com.crediya.cy_authentication.model.idtype.gateways.IdTypeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.DisplayName;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class IdTypeUseCaseTest {
 
     @Mock
@@ -25,7 +28,6 @@ class IdTypeUseCaseTest {
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
         idTypeUseCase = new IdTypeUseCase(idTypeRepository);
 
         cedulaIdType = IdType.builder()

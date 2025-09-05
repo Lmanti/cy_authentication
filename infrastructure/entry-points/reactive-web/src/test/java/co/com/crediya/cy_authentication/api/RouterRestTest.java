@@ -3,112 +3,248 @@ package co.com.crediya.cy_authentication.api;
 import co.com.crediya.cy_authentication.api.dto.CreateUserDTO;
 import co.com.crediya.cy_authentication.api.dto.EditUserDTO;
 import co.com.crediya.cy_authentication.api.dto.UserDTO;
-import co.com.crediya.cy_authentication.api.mapper.UserDTOMapper;
-import co.com.crediya.cy_authentication.model.user.User;
-import co.com.crediya.cy_authentication.usecase.user.UserUseCase;
+import co.com.crediya.cy_authentication.model.idtype.IdType;
+import co.com.crediya.cy_authentication.model.role.Role;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mock.Strictness;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
-import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class RouterRestTest {
 
-    @Mock(strictness = Strictness.LENIENT)
-    private UserUseCase userUseCase;
+    @Mock
+    private Handler handler;
 
-    @Mock(strictness = Strictness.LENIENT)
-    private UserDTOMapper userMapper;
-    
-//     @Test
-//     void shouldConfigureRoutesCorrectly() {
-//         // Arrange
-//         Handler handler = new Handler(userUseCase, userMapper);
-//         RouterFunction<ServerResponse> routerFunction = new RouterRest().routerFunction(handler);
-//         WebTestClient client = WebTestClient.bindToRouterFunction(routerFunction).build();
-        
-//         // Configurar comportamiento de los mocks
-//         User mockUser = User.builder()
-//                 .idNumber(123456789L)
-//                 .idType(1)
-//                 .name("John")
-//                 .lastname("Doe")
-//                 .birthDate(LocalDate.of(1990, 1, 1))
-//                 .address("123 Main St")
-//                 .phone("1234567890")
-//                 .email("john.doe@example.com")
-//                 .baseSalary(5000.0)
-//                 .password("password123")
-//                 .build();
-        
-//         when(userUseCase.getAllUsers()).thenReturn(Flux.just(mockUser));
-//         when(userUseCase.saveUser(any())).thenReturn(Mono.just(mockUser));
-//         when(userUseCase.editUser(any())).thenReturn(Mono.just(mockUser));
-//         when(userUseCase.deleteUser(any())).thenReturn(Mono.empty());
-        
-//         // Mock UserDTOMapper para que devuelva objetos válidos
-//         UserDTO userDTO = new UserDTO();
-//         userDTO.setIdNumber(123456789L);
-//         userDTO.setName("John");
-//         userDTO.setLastname("Doe");
-//         userDTO.setEmail("john.doe@example.com");
-        
-//         when(userMapper.toResponseList(any())).thenReturn(Collections.singletonList(userDTO));
-//         when(userMapper.toResponse(any())).thenReturn(userDTO);
-//         when(userMapper.toModel(any(CreateUserDTO.class))).thenReturn(mockUser);
-//         when(userMapper.toModel(any(EditUserDTO.class))).thenReturn(mockUser);
+    private RouterRest routerRest;
+    private WebTestClient webTestClient;
 
-//         // Act & Assert - GET /api/v1/usuarios
-//         client.get()
-//                 .uri("/api/v1/usuarios")
-//                 .exchange()
-//                 .expectStatus().isOk();
+    @BeforeEach
+    void setUp() {
+        routerRest = new RouterRest();
+        RouterFunction<ServerResponse> routerFunction = routerRest.routerFunction(handler);
+        webTestClient = WebTestClient.bindToRouterFunction(routerFunction).build();
+    }
 
-//         // Act & Assert - POST /api/v1/usuarios
-//         CreateUserDTO createDTO = new CreateUserDTO();
-//         createDTO.setIdNumber(123456789L);
-//         createDTO.setName("John");
-//         createDTO.setLastname("Doe");
-//         createDTO.setEmail("john.doe@example.com");
-//         createDTO.setBaseSalary(5000.0);
-//         createDTO.setUsername("johndoe");
-//         createDTO.setPassword("password123");
+    @Test
+    @DisplayName("Should route GET /api/v1/usuarios to getAllUsers handler")
+    void shouldRouteGetAllUsersToHandler() {
+        // Given
+        List<UserDTO> users = Arrays.asList(createSampleUserDTO());
+        when(handler.getAllUsers(any())).thenReturn(ServerResponse.ok().bodyValue(users));
+
+        // When & Then
+        webTestClient.get()
+                .uri("/api/v1/usuarios")
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(handler).getAllUsers(any());
+    }
+
+    @Test
+    @DisplayName("Should route POST /api/v1/usuarios to createUser handler")
+    void shouldRouteCreateUserToHandler() {
+        // Given
+        CreateUserDTO createUserDTO = createSampleCreateUserDTO();
+        UserDTO userDTO = createSampleUserDTO();
         
-//         client.post()
-//                 .uri("/api/v1/usuarios")
-//                 .bodyValue(createDTO)
-//                 .exchange()
-//                 .expectStatus().isCreated();
+        when(handler.createUser(any())).thenReturn(
+            ServerResponse.created(java.net.URI.create("/userDetails/12345678"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(userDTO)
+        );
 
-//         // Act & Assert - PUT /api/v1/usuarios
-//         EditUserDTO editDTO = new EditUserDTO();
-//         editDTO.setIdNumber(123456789L);
-//         editDTO.setName("John");
-//         editDTO.setLastname("Doe");
-//         editDTO.setEmail("john.doe@example.com");
+        // When & Then
+        webTestClient.post()
+                .uri("/api/v1/usuarios")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(createUserDTO)
+                .exchange()
+                .expectStatus().isCreated();
+
+        verify(handler).createUser(any());
+    }
+
+    @Test
+    @DisplayName("Should route PUT /api/v1/usuarios to updateUser handler")
+    void shouldRouteUpdateUserToHandler() {
+        // Given
+        EditUserDTO editUserDTO = createSampleEditUserDTO();
+        UserDTO userDTO = createSampleUserDTO();
         
-//         client.put()
-//                 .uri("/api/v1/usuarios")
-//                 .bodyValue(editDTO)
-//                 .exchange()
-//                 .expectStatus().isOk();
+        when(handler.updateUser(any())).thenReturn(
+            ServerResponse.ok()
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(userDTO)
+        );
 
-//         // Act & Assert - DELETE /api/v1/usuarios/{idNumber}
-//         client.delete()
-//                 .uri("/api/v1/usuarios/123456789")
-//                 .exchange()
-//                 .expectStatus().isOk();
-//     }
+        // When & Then
+        webTestClient.put()
+                .uri("/api/v1/usuarios")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(editUserDTO)
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(handler).updateUser(any());
+    }
+
+    @Test
+    @DisplayName("Should route DELETE /api/v1/usuarios/{idNumber} to deleteUser handler")
+    void shouldRouteDeleteUserToHandler() {
+        // Given
+        when(handler.deleteUser(any())).thenReturn(ServerResponse.ok().build());
+
+        // When & Then
+        webTestClient.delete()
+                .uri("/api/v1/usuarios/12345678")
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(handler).deleteUser(any());
+    }
+
+    @Test
+    @DisplayName("Should route GET /api/v1/usuarios/parameters/idTypes to getAllIdTypes handler")
+    void shouldRouteGetAllIdTypesToHandler() {
+        // Given
+        List<IdType> idTypes = Arrays.asList(createSampleIdType());
+        when(handler.getAllIdTypes(any())).thenReturn(ServerResponse.ok().bodyValue(idTypes));
+
+        // When & Then
+        webTestClient.get()
+                .uri("/api/v1/usuarios/parameters/idTypes")
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(handler).getAllIdTypes(any());
+    }
+
+    @Test
+    @DisplayName("Should route GET /api/v1/usuarios/parameters/roles to getAllRoles handler")
+    void shouldRouteGetAllRolesToHandler() {
+        // Given
+        List<Role> roles = Arrays.asList(createSampleRole());
+        when(handler.getAllRoles(any())).thenReturn(ServerResponse.ok().bodyValue(roles));
+
+        // When & Then
+        webTestClient.get()
+                .uri("/api/v1/usuarios/parameters/roles")
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(handler).getAllRoles(any());
+    }
+
+    @Test
+    @DisplayName("Should return 404 for non-existent routes")
+    void shouldReturn404ForNonExistentRoutes() {
+        // When & Then
+        webTestClient.get()
+                .uri("/api/v1/non-existent")
+                .exchange()
+                .expectStatus().isNotFound();
+    }
+
+    @Test
+    @DisplayName("Should handle path variables correctly")
+    void shouldHandlePathVariablesCorrectly() {
+        // Given
+        when(handler.deleteUser(any())).thenReturn(ServerResponse.ok().build());
+
+        // When & Then
+        webTestClient.delete()
+                .uri("/api/v1/usuarios/987654321")
+                .exchange()
+                .expectStatus().isOk();
+
+        verify(handler).deleteUser(any());
+    }
+
+    @Test
+    @DisplayName("Should create router function successfully")
+    void shouldCreateRouterFunctionSuccessfully() {
+        // When
+        RouterFunction<ServerResponse> routerFunction = routerRest.routerFunction(handler);
+
+        // Then
+        assertNotNull(routerFunction);
+    }
+
+    // Helper methods para crear objetos de prueba
+    private UserDTO createSampleUserDTO() {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setIdNumber(12345678L);
+        userDTO.setIdType(createSampleIdType());
+        userDTO.setName("John");
+        userDTO.setLastname("Doe");
+        userDTO.setBirthDate(LocalDate.of(1990, 1, 1));
+        userDTO.setEmail("john.doe@example.com");
+        userDTO.setBaseSalary(3000000.0);
+        userDTO.setRole(createSampleRole());
+        return userDTO;
+    }
+
+    private CreateUserDTO createSampleCreateUserDTO() {
+        CreateUserDTO createUserDTO = new CreateUserDTO();
+        createUserDTO.setIdNumber(12345678L);
+        createUserDTO.setIdTypeId(1);
+        createUserDTO.setName("John");
+        createUserDTO.setLastname("Doe");
+        createUserDTO.setBirthDate(LocalDate.of(1990, 1, 1));
+        createUserDTO.setEmail("john.doe@example.com");
+        createUserDTO.setBaseSalary(3000000.0);
+        createUserDTO.setRoleId(1);
+        createUserDTO.setPassword("password123");
+        return createUserDTO;
+    }
+
+    private EditUserDTO createSampleEditUserDTO() {
+        EditUserDTO editUserDTO = new EditUserDTO();
+        editUserDTO.setIdNumber(12345678L);
+        editUserDTO.setIdTypeId(1);
+        editUserDTO.setName("John");
+        editUserDTO.setLastname("Doe");
+        editUserDTO.setBirthDate(LocalDate.of(1990, 1, 1));
+        editUserDTO.setEmail("john.doe@example.com");
+        editUserDTO.setBaseSalary(3000000.0);
+        editUserDTO.setRoleId(1);
+        editUserDTO.setPassword("password123");
+        return editUserDTO;
+    }
+
+    private IdType createSampleIdType() {
+        return IdType.builder()
+                .id(1)
+                .name("CC")
+                .description("Cédula de Ciudadanía")
+                .build();
+    }
+
+    private Role createSampleRole() {
+        return Role.builder()
+                .id(1)
+                .name("USER")
+                .description("Standard user")
+                .build();
+    }
 }
