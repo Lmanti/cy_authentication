@@ -2,12 +2,14 @@ package co.com.crediya.cy_authentication.api.config;
 
 import co.com.crediya.cy_authentication.api.dto.ErrorResponse;
 import co.com.crediya.cy_authentication.exception.DataPersistenceException;
+import co.com.crediya.cy_authentication.exception.InvalidCredentialsException;
 import co.com.crediya.cy_authentication.exception.InvalidUserDataException;
 import co.com.crediya.cy_authentication.exception.UserNotFoundException;
 import reactor.core.publisher.Mono;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ServerWebExchange;
@@ -40,6 +42,19 @@ public class GlobalExceptionHandler {
                 path, ex.getMessage(), HttpStatus.BAD_REQUEST, traceId);
         
         return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse));
+    }
+
+    @ExceptionHandler(exception = { InvalidCredentialsException.class, BadCredentialsException.class })
+    public Mono<ResponseEntity<ErrorResponse>> handleInvalidCredentialsException(
+        Exception ex, ServerWebExchange exchange) {
+        
+        String path = exchange.getRequest().getPath().value();
+        String traceId = exchange.getRequest().getId();
+        
+        ErrorResponse errorResponse = buildErrorResponse(
+                path, ex.getMessage(), HttpStatus.UNAUTHORIZED, traceId);
+        
+        return Mono.just(ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse));
     }
     
     @ExceptionHandler(DataPersistenceException.class)

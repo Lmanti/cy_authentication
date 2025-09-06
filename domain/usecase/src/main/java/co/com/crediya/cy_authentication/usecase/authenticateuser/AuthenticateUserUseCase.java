@@ -2,6 +2,7 @@ package co.com.crediya.cy_authentication.usecase.authenticateuser;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.List;
@@ -25,12 +26,23 @@ public final class AuthenticateUserUseCase {
             .switchIfEmpty(Mono.error(new InvalidCredentialsException("Credenciales inválidas")))
             .flatMap(toValidate ->
                 roleRepository.getRoleById(toValidate.getRoleId())
-                .flatMap(role -> {
-                    if (!hasher.matches(password, toValidate.getPassword())) return Mono.error(new InvalidCredentialsException("Credenciales inválidas"));
-
-                    String token = tokens.generate(toValidate.getIdNumber().toString(), List.of(role.getName()), Duration.ofHours(4));
-                    return Mono.just(new JwtResponse(token));
-                })
+                    .flatMap(role ->
+                        Mono.fromCallable(() -> hasher.matches(password, toValidate.getPassword()))
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .flatMap(matches -> {
+                                if (!matches) {
+                                    return Mono.error(new InvalidCredentialsException("Credenciales inválidas"));
+                                } else {
+                                    String token = tokens.generate(
+                                        toValidate.getIdNumber().toString(),
+                                        List.of(role.getName()),
+                                        Duration.ofHours(4)
+                                    );
+                                    
+                                    return Mono.just(new JwtResponse(token));
+                                }
+                            })
+                    )
             );
     }
 }

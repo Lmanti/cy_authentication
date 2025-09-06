@@ -15,6 +15,7 @@ import co.com.crediya.cy_authentication.model.user.record.UserRecord;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @RequiredArgsConstructor
 public class UserUseCase {
@@ -34,7 +35,7 @@ public class UserUseCase {
     }
 
     public Mono<UserRecord> saveUser(Mono<User> user) {
-        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate)))
+        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate), Mode.UPDATE))
             .flatMap(validUser ->
                 Mono.zip(
                     idTypeRepository.getIdTypeById(validUser.getIdTypeId())
@@ -52,21 +53,24 @@ public class UserUseCase {
                     Role role = params.getT2();
                     User toSave = params.getT3();
 
-                    toSave.setPassword(passwordHasher.hash(toSave.getPassword()));
-                    return userRepository.saveUser(Mono.just(toSave))
-                        .map(savedUser -> new UserRecord(
-                            savedUser.getId(),
-                            savedUser.getIdNumber(),
-                            idType,
-                            savedUser.getName(),
-                            savedUser.getLastname(),
-                            savedUser.getBirthDate(),
-                            savedUser.getAddress(),
-                            savedUser.getPhone(),
-                            savedUser.getEmail(),
-                            savedUser.getBaseSalary(),
-                            role,
-                            savedUser.getPassword()));
+                    return Mono.fromCallable(() -> passwordHasher.hash(toSave.getPassword()))
+                        .subscribeOn(Schedulers.boundedElastic())
+                        .map(hashed -> { toSave.setPassword(hashed); return toSave; })
+                        .flatMap(newUser -> userRepository.saveUser(Mono.just(newUser))
+                            .map(savedUser -> new UserRecord(
+                                savedUser.getId(),
+                                savedUser.getIdNumber(),
+                                idType,
+                                savedUser.getName(),
+                                savedUser.getLastname(),
+                                savedUser.getBirthDate(),
+                                savedUser.getAddress(),
+                                savedUser.getPhone(),
+                                savedUser.getEmail(),
+                                savedUser.getBaseSalary(),
+                                role,
+                                savedUser.getPassword()))
+                        );
                 })
             );
     }
@@ -119,7 +123,7 @@ public class UserUseCase {
     }
 
     public Mono<UserRecord> editUser(Mono<User> user) {
-        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate)))
+        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate), Mode.UPDATE))
             .flatMap(validUser ->
                 Mono.zip(
                     idTypeRepository.getIdTypeById(validUser.getIdTypeId())
@@ -138,22 +142,32 @@ public class UserUseCase {
                     Role role = params.getT2();
                     User toEdit = params.getT3();
 
-                    updateUserFields(toEdit, validUser);                    
+                    updateUserFields(toEdit, validUser);
+                    
+                    boolean hasNewPassword = validUser.getPassword() != null && !validUser.getPassword().isBlank();
 
-                    return userRepository.editUser(Mono.just(toEdit))
-                        .map(updatedUser -> new UserRecord(
-                            updatedUser.getId(),
-                            updatedUser.getIdNumber(),
+                    Mono<User> applyPasswordMono = hasNewPassword
+                        ? Mono.fromCallable(() -> passwordHasher.hash(validUser.getPassword()))
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .map(hashed -> { toEdit.setPassword(hashed); return toEdit; })
+                        : Mono.just(toEdit);
+
+                    return applyPasswordMono
+                        .flatMap(editedUser -> userRepository.editUser(Mono.just(editedUser)))
+                        .map(updated -> new UserRecord(
+                            updated.getId(),
+                            updated.getIdNumber(),
                             idType,
-                            updatedUser.getName(),
-                            updatedUser.getLastname(),
-                            updatedUser.getBirthDate(),
-                            updatedUser.getAddress(),
-                            updatedUser.getPhone(),
-                            updatedUser.getEmail(),
-                            updatedUser.getBaseSalary(),
+                            updated.getName(),
+                            updated.getLastname(),
+                            updated.getBirthDate(),
+                            updated.getAddress(),
+                            updated.getPhone(),
+                            updated.getEmail(),
+                            updated.getBaseSalary(),
                             role,
-                            updatedUser.getPassword()));
+                            updated.getPassword()
+                        ));
                 })
             );
     }
@@ -166,7 +180,7 @@ public class UserUseCase {
         return userRepository.existByIdNumber(idNumber);
     }
 
-    private Mono<User> validateUserData(Mono<User> userMono) {
+    private Mono<User> validateUserData(Mono<User> userMono, Mode mode) {
         return userMono.flatMap(user -> {
             if (user.getIdNumber() == null || user.getIdNumber().equals(0L)) {
                 return Mono.error(new InvalidUserDataException("El número de identificación es requerido"));
@@ -197,7 +211,7 @@ public class UserUseCase {
                     String.format("El salario base debe estar entre %,.2f y %,.2f", MIN_SALARY, MAX_SALARY)));
             }
 
-            if (user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+            if (mode.equals(Mode.CREATE) && (user.getPassword() == null || user.getPassword().trim().isEmpty())) {
                 return Mono.error(new InvalidUserDataException("La contraseña es requerida"));
             }
             
@@ -248,9 +262,5 @@ public class UserUseCase {
         existingUser.setEmail(userData.getEmail());
         existingUser.setBaseSalary(userData.getBaseSalary());
         existingUser.setRoleId(userData.getRoleId());
-
-        if (!existingUser.getPassword().equals(userData.getPassword())) {
-            existingUser.setPassword(passwordHasher.hash(existingUser.getPassword()));
-        }
     }
 }

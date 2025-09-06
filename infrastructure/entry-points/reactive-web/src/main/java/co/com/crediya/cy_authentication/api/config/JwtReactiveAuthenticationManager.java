@@ -34,7 +34,7 @@ public class JwtReactiveAuthenticationManager implements ReactiveAuthenticationM
                 return new UsernamePasswordAuthenticationToken(data.getSubject(), token, authorities);
                 })
                 .map(Mono::just)
-                .orElseGet(() -> Mono.error(new BadCredentialsException("Invalid or expired token")))
+                .orElseGet(() -> Mono.error(new BadCredentialsException("Sesión expirada o token inválido")))
             );
     }
 }
