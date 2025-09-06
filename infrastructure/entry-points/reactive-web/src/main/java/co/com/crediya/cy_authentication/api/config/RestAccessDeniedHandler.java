@@ -2,7 +2,6 @@ package co.com.crediya.cy_authentication.api.config;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
@@ -33,8 +32,8 @@ public class RestAccessDeniedHandler implements ServerAccessDeniedHandler {
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, String> body = Map.of(
-            "error", "forbidden",
-            "message", Optional.ofNullable(ex.getMessage()).orElse("Access denied"),
+            "error", "Forbidden",
+            "message", "Lo sentimos, no tienes permitido entrar aquí",
             "path", exchange.getRequest().getPath().value()
         );
 

@@ -16,6 +16,25 @@ import org.springframework.security.web.server.context.NoOpServerSecurityContext
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
+    
+    private final String baseURL = "/api/v1/usuarios";
+
+    private enum Roles {
+        ADMIN("ADMIN"),
+        ASESOR("ASESOR"),
+        CLIENTE("CLIENTE");
+
+        private String value;
+
+        Roles(String value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(value);
+        }
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,28 +62,16 @@ public class SecurityConfig {
                 .accessDeniedHandler(deniedHandler)
             )
             .authorizeExchange(auth -> auth
-                .pathMatchers(
-                    HttpMethod.GET,
-                    "/actuator/health"
-                ).permitAll()
-                .pathMatchers(
-                    "/swagger-ui.html",
-                    "/swagger-ui/**",
-                    "/v3/api-docs",
-                    "/v3/api-docs/**",
-                    "/v3/api-docs.yaml",
-                    "/v3/api-docs/swagger-config",
-                    "/api-docs",
-                    "/api-docs/**",
-                    "/api-docs.yaml",
-                    "/api-docs/swagger-config",
-                    "/webjars/**"
-                ).permitAll()
-                .pathMatchers(
-                    HttpMethod.POST, 
-                    "/api/v1/usuarios",
-                    "/api/v1/usuarios/login"
-                ).permitAll()
+                .pathMatchers("/actuator/health").permitAll()
+                .pathMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
+                .pathMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/v3/api-docs/swagger-config").permitAll()
+                .pathMatchers("/api-docs", "/api-docs/**", "/api-docs.yaml", "/api-docs/swagger-config").permitAll()
+                .pathMatchers("/webjars/**").permitAll()
+                .pathMatchers(HttpMethod.POST, baseURL + "/login").permitAll()
+                .pathMatchers(HttpMethod.POST, baseURL)
+                    .hasAnyRole(Roles.ADMIN.toString(), Roles.ASESOR.toString())
+                .pathMatchers(HttpMethod.GET, baseURL + "/exists/**")
+                    .hasRole(Roles.CLIENTE.toString())
                 .anyExchange().authenticated()
             )
             .addFilterAt(authWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

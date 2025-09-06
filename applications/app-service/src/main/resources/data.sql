@@ -12,3 +12,20 @@ INSERT INTO roles (name, description) VALUES
 ('ADMIN', 'Administrador del sistema con acceso completo a todas las funcionalidades'),
 ('ASESOR', 'Asesor comercial con permisos para gestionar clientes y realizar ventas'),
 ('CLIENTE', 'Cliente del sistema con acceso limitado a sus propios datos y servicios');
+
+INSERT INTO users (
+  id_number, id_type_id, name, lastname, birth_date,
+  address, phone, email, base_salary, role_id, password
+) VALUES (
+  10000001,
+  1,
+  'Administrador',
+  'General',
+  DATE '1990-01-01',
+  'Calle 123',
+  '3001234567',
+  'admin@crediya.com',
+  0.00,
+  1,
+  '$2a$12$crDkSPkIEE3T.Ld5.X39feQP38INybGFQLvw/MqyMegqlyBL9hr3.'
+);

@@ -14,7 +14,6 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.Optional;
 
 @Component
 public class JwtAuthEntryPoint implements ServerAuthenticationEntryPoint {
@@ -32,8 +31,8 @@ public class JwtAuthEntryPoint implements ServerAuthenticationEntryPoint {
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
         Map<String, String> body = Map.of(
-            "error", "unauthorized",
-            "message", Optional.ofNullable(ex.getMessage()).orElse("Unauthorized"),
+            "error", "Unauthorized",
+            "message", "Lo sentimos, no está autorizado para realizar esta acción",
             "path", exchange.getRequest().getPath().value()
         );
 
