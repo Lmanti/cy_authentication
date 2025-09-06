@@ -1,5 +1,8 @@
 server:
   port: 8080
+security:
+  jwt:
+    secret: AZdXJ0/eHaLdAjAw/S6Bngojh96bBMXwcvd38HwzAok=
 spring:
   application:
     name: "cy_authentication"

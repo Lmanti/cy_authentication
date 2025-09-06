@@ -8,9 +8,11 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import co.com.crediya.cy_authentication.api.dto.CreateUserDTO;
 import co.com.crediya.cy_authentication.api.dto.EditUserDTO;
+import co.com.crediya.cy_authentication.api.dto.LoginRequest;
 import co.com.crediya.cy_authentication.api.dto.UserDTO;
 import co.com.crediya.cy_authentication.model.idtype.IdType;
 import co.com.crediya.cy_authentication.model.role.Role;
+import co.com.crediya.cy_authentication.model.security.JwtResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -190,6 +192,31 @@ public class RouterRest {
                     )
                 }
             )
+        ),
+        @RouterOperation(
+            path = userBaseRoute + "/login", 
+            method = RequestMethod.POST,
+            operation = @Operation(
+                operationId = "login",
+                tags = {"Authentication"},
+                summary = "Iniciar sesión",
+                description = "Iniciar sesión con un usuario registrado en el sistema",
+                requestBody = @RequestBody(
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = LoginRequest.class))
+                ),
+                responses = {
+                    @ApiResponse(
+                        responseCode = "200", 
+                        description = "Usuario ha iniciado sesión exitosamente",
+                        content = @Content(schema = @Schema(implementation = JwtResponse.class))
+                    ),
+                    @ApiResponse(
+                        responseCode = "401", 
+                        description = "Credenciales inválidas"
+                    )
+                }
+            )
         )
     })
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
@@ -199,6 +226,7 @@ public class RouterRest {
             .andRoute(DELETE(userBaseRoute.concat("/{idNumber}")), handler::deleteUser)
             .andRoute(GET(userBaseRoute.concat("/exists/{idNumber}")), handler::existsByIdNumber)
             .andRoute(GET(userBaseRoute + idTypesBaseRoute), handler::getAllIdTypes)
-            .andRoute(GET(userBaseRoute + rolesBaseRoute), handler::getAllRoles);
+            .andRoute(GET(userBaseRoute + rolesBaseRoute), handler::getAllRoles)
+            .andRoute(POST(userBaseRoute.concat("/login")), handler::login);
     }
 }

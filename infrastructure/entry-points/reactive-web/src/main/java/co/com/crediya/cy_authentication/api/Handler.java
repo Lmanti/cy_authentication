@@ -11,7 +11,9 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 import co.com.crediya.cy_authentication.api.dto.CreateUserDTO;
 import co.com.crediya.cy_authentication.api.dto.EditUserDTO;
+import co.com.crediya.cy_authentication.api.dto.LoginRequest;
 import co.com.crediya.cy_authentication.api.mapper.UserDTOMapper;
+import co.com.crediya.cy_authentication.usecase.authenticateuser.AuthenticateUserUseCase;
 import co.com.crediya.cy_authentication.usecase.idtype.IdTypeUseCase;
 import co.com.crediya.cy_authentication.usecase.role.RoleUseCase;
 import co.com.crediya.cy_authentication.usecase.user.UserUseCase;
@@ -24,6 +26,7 @@ public class Handler {
     private final IdTypeUseCase idTypeUseCase;
     private final RoleUseCase roleUseCase;
     private final UserDTOMapper userMapper;
+    private final AuthenticateUserUseCase authenticateUserUseCase;
 
     public Mono<ServerResponse> getAllUsers(ServerRequest serverRequest) {
         return userUseCase.getAllUsers().collectList()
@@ -66,5 +69,13 @@ public class Handler {
     public Mono<ServerResponse> getAllRoles(ServerRequest serverRequest) {
         return roleUseCase.getAllRoles().collectList()
             .flatMap(rolesList -> ServerResponse.ok().bodyValue(rolesList));
+    }
+
+    public Mono<ServerResponse> login(ServerRequest serverRequest) {
+        return serverRequest.bodyToMono(LoginRequest.class)
+            .flatMap(loginRequest ->
+                authenticateUserUseCase.handle(loginRequest.getUsername(), loginRequest.getPassword())
+                .flatMap(jwt -> ServerResponse.ok().bodyValue(jwt))
+            );
     }
 }
