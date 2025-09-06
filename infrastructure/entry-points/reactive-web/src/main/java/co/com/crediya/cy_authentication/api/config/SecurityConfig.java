@@ -43,23 +43,11 @@ public class SecurityConfig {
                 .accessDeniedHandler(deniedHandler)
             )
             .authorizeExchange(auth -> auth
-                .pathMatchers(
-                    HttpMethod.GET,
-                    "/actuator/health"
-                ).permitAll()
-                .pathMatchers(
-                    "/swagger-ui.html",
-                    "/swagger-ui/**",
-                    "/v3/api-docs",
-                    "/v3/api-docs/**",
-                    "/v3/api-docs.yaml",
-                    "/v3/api-docs/swagger-config",
-                    "/api-docs",
-                    "/api-docs/**",
-                    "/api-docs.yaml",
-                    "/api-docs/swagger-config",
-                    "/webjars/**"
-                ).permitAll()
+                .pathMatchers("/actuator/health").permitAll()
+                .pathMatchers("/swagger-ui.html", "/swagger-ui/**").permitAll()
+                .pathMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/v3/api-docs/swagger-config").permitAll()
+                .pathMatchers("/api-docs", "/api-docs/**", "/api-docs.yaml", "/api-docs/swagger-config").permitAll()
+                .pathMatchers("/webjars/**").permitAll()
                 .pathMatchers(
                     HttpMethod.POST, 
                     "/api/v1/usuarios",

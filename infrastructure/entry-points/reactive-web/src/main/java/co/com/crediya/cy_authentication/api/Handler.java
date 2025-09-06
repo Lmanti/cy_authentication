@@ -73,9 +73,13 @@ public class Handler {
 
     public Mono<ServerResponse> login(ServerRequest serverRequest) {
         return serverRequest.bodyToMono(LoginRequest.class)
-            .flatMap(loginRequest ->
-                authenticateUserUseCase.handle(loginRequest.getUsername(), loginRequest.getPassword())
-                .flatMap(jwt -> ServerResponse.ok().bodyValue(jwt))
-            );
+            .flatMap(req -> {
+                String ip = serverRequest.remoteAddress()
+                    .map(addr -> addr.getAddress().getHostAddress())
+                    .orElse("unknown");
+
+                return authenticateUserUseCase.handle(req.getUsername(), req.getPassword(), ip)
+                    .flatMap(jwt -> ServerResponse.ok().bodyValue(jwt));
+            });
     }
 }
