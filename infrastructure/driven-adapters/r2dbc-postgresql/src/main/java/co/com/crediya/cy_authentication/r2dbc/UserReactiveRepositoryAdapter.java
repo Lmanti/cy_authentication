@@ -98,29 +98,16 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
     @Override
     public Mono<User> editUser(Mono<User> user) {
         return user
-            .doOnNext(userData -> log.info("Attempting to edit user with ID: {}", userData.getIdNumber()))
-            .flatMap(userData -> repository.findByIdNumber(userData.getIdNumber())
-                .switchIfEmpty(Mono.defer(() -> {
-                    log.warn("User with ID {} not found for edit", userData.getIdNumber());
-                    return Mono.error(new UserNotFoundException("No se ha encontrado un usuario con identificación " + userData.getIdNumber()));
-                }))
-                .flatMap(existingEntity -> {
-                    log.debug("Found existing user: {}", existingEntity.getIdNumber());
-
-                    updateEntityFields(existingEntity, userData);
-                    
-                    log.debug("Saving updated user entity");
-                    return repository.save(existingEntity);
-                })
-                .map(this::toEntity)
-                .doOnNext(updatedUser -> log.info("User with ID {} successfully updated", updatedUser.getIdNumber()))
-                .onErrorMap(ex -> {
-                    if (ex instanceof UserNotFoundException) {
-                        return ex;
-                    }
-                    log.error("Error updating user: {}", ex.getMessage(), ex);
-                    return new DataPersistenceException("Error intentando actualizar el usuario", ex);
-                })
+            .doOnNext(userData -> log.info("Attempting to update user with ID: {}", userData.getIdNumber()))
+            .flatMap(userData ->
+                repository.save(toData(userData))
+                    .doOnNext(updatedEntity -> log.info("User entity with ID {} successfully updated", updatedEntity.getIdNumber()))
+                    .map(this::toEntity)
+                    .doOnNext(updatedUser -> log.info("User with ID {} successfully updated", updatedUser.getIdNumber()))
+                    .onErrorMap(ex -> {
+                        log.error("Error updating user: {}", ex.getMessage(), ex);
+                        return new DataPersistenceException("Error intentando actualizar el usuario", ex);
+                    })
             )
             .as(writeTransactional::transactional);
     }
@@ -205,20 +192,6 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 return new DataRetrievalException("Error consultando usuario con número de identificación " + idNumber, ex);
             })
             .as(readOnlyTransactional::transactional);
-    }
-
-    private void updateEntityFields(UserEntity existingEntity, User userData) {
-        existingEntity.setIdNumber(userData.getIdNumber());
-        existingEntity.setIdTypeId(userData.getIdTypeId());
-        existingEntity.setName(userData.getName());
-        existingEntity.setLastname(userData.getLastname());
-        existingEntity.setBirthDate(userData.getBirthDate());
-        existingEntity.setAddress(userData.getAddress());
-        existingEntity.setPhone(userData.getPhone());
-        existingEntity.setEmail(userData.getEmail());
-        existingEntity.setBaseSalary(userData.getBaseSalary());
-        existingEntity.setRoleId(userData.getRoleId());
-        existingEntity.setPassword(userData.getPassword());
     }
 
 }
