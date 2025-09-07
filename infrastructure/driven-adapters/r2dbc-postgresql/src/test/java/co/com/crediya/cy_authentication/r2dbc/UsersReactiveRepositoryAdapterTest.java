@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -88,6 +89,18 @@ class UsersReactiveRepositoryAdapterTest {
         validUserEntity.setBaseSalary(3000000.0);
         validUserEntity.setRoleId(1);
         validUserEntity.setPassword("password123");
+
+        // Defaults para mapper (evita nulls cuando algún test no stubbea)
+        when(mapper.map(any(), eq(UserEntity.class))).thenReturn(validUserEntity);
+        when(mapper.map(any(), eq(User.class))).thenReturn(validUser);
+
+        // Default: save devuelve el mismo objeto (evita NPE en doOnNext)
+        when(repository.save(any(UserEntity.class)))
+        .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        // Default: delete no falla
+        when(repository.deleteById(any(BigInteger.class))).thenReturn(Mono.empty());
+        when(repository.deleteById(any(Mono.class))).thenReturn(Mono.empty());
     }
 
     @Test
@@ -182,20 +195,6 @@ class UsersReactiveRepositoryAdapterTest {
     }
 
     @Test
-    @DisplayName("Should throw UserNotFoundException when editing non-existent user")
-    void shouldThrowUserNotFoundExceptionWhenEditingNonExistentUser() {
-        // Given
-        when(repository.findByIdNumber(999L)).thenReturn(Mono.empty());
-
-        User nonExistentUser = validUser.toBuilder().idNumber(999L).build();
-
-        // When & Then
-        StepVerifier.create(adapter.editUser(Mono.just(nonExistentUser)))
-                .expectError(UserNotFoundException.class)
-                .verify();
-    }
-
-    @Test
     @DisplayName("Should delete user successfully")
     void shouldDeleteUserSuccessfully() {
         // Given
@@ -206,6 +205,22 @@ class UsersReactiveRepositoryAdapterTest {
         StepVerifier.create(adapter.deleteUser(12345678L))
                 .verifyComplete();
     }
+
+    @Test
+        @DisplayName("editUser no debe consultar findByIdNumber en adapter")
+        void editUserShouldNotCallFindByIdNumber() {
+        // Given
+        when(repository.save(any(UserEntity.class))).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(mapper.map(any(UserEntity.class), any())).thenReturn(validUser);
+
+        // When & Then
+        StepVerifier.create(adapter.editUser(Mono.just(validUser)))
+                .expectNext(validUser)
+                .verifyComplete();
+
+        // Verifica que NUNCA se llamó findByIdNumber en el adapter
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).findByIdNumber(anyLong());
+        }
 
     @Test
     @DisplayName("Should throw UserNotFoundException when deleting non-existent user")
@@ -366,19 +381,6 @@ class UsersReactiveRepositoryAdapterTest {
     // When & Then
     StepVerifier.create(adapter.getByIdNumber(12345678L))
             .expectError(DataRetrievalException.class)
-            .verify();
-    }
-
-    @Test
-    @DisplayName("Should handle findByIdNumber error in editUser")
-    void shouldHandleFindByIdNumberErrorInEditUser() {
-    // Given
-    when(repository.findByIdNumber(12345678L))
-            .thenReturn(Mono.error(new RuntimeException("Database find error")));
-
-    // When & Then
-    StepVerifier.create(adapter.editUser(Mono.just(validUser)))
-            .expectError(DataPersistenceException.class)
             .verify();
     }
 

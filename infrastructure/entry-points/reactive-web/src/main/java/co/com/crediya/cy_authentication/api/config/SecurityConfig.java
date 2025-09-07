@@ -3,17 +3,23 @@ package co.com.crediya.cy_authentication.api.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.server.SecurityWebFilterChain;
+import org.springframework.security.web.server.ServerAuthenticationEntryPoint;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
+import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
 import org.springframework.security.web.server.authentication.ServerAuthenticationEntryPointFailureHandler;
+import org.springframework.security.web.server.authorization.ServerAccessDeniedHandler;
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository;
 
 @Configuration
+@EnableWebFluxSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
     
@@ -43,10 +49,10 @@ public class SecurityConfig {
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
-        JwtReactiveAuthenticationManager authManager,
-        BearerTokenServerAuthenticationConverter converter,
-        JwtAuthEntryPoint entryPoint,
-        RestAccessDeniedHandler deniedHandler
+        ReactiveAuthenticationManager authManager,
+        ServerAuthenticationConverter converter,
+        ServerAuthenticationEntryPoint entryPoint,
+        ServerAccessDeniedHandler deniedHandler
     ) {
 
         AuthenticationWebFilter authWebFilter = new AuthenticationWebFilter(authManager);

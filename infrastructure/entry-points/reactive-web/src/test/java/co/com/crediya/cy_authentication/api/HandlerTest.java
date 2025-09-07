@@ -8,6 +8,7 @@ import co.com.crediya.cy_authentication.model.idtype.IdType;
 import co.com.crediya.cy_authentication.model.role.Role;
 import co.com.crediya.cy_authentication.model.user.User;
 import co.com.crediya.cy_authentication.model.user.record.UserRecord;
+import co.com.crediya.cy_authentication.usecase.authenticateuser.AuthenticateUserUseCase;
 import co.com.crediya.cy_authentication.usecase.idtype.IdTypeUseCase;
 import co.com.crediya.cy_authentication.usecase.role.RoleUseCase;
 import co.com.crediya.cy_authentication.usecase.user.UserUseCase;
@@ -53,6 +54,9 @@ class HandlerTest {
     @Mock
     private ServerRequest serverRequest;
 
+    @Mock
+    private AuthenticateUserUseCase authenticateUserUseCase;
+
     private Handler handler;
 
     private UserRecord userRecord;
@@ -65,7 +69,7 @@ class HandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new Handler(userUseCase, idTypeUseCase, roleUseCase, userMapper);
+        handler = new Handler(userUseCase, idTypeUseCase, roleUseCase, userMapper, authenticateUserUseCase);
 
         // Setup test data
         idType = IdType.builder()

@@ -5,6 +5,7 @@ import co.com.crediya.cy_authentication.model.idtype.IdType;
 import co.com.crediya.cy_authentication.model.idtype.gateways.IdTypeRepository;
 import co.com.crediya.cy_authentication.model.role.Role;
 import co.com.crediya.cy_authentication.model.role.gateways.RoleRepository;
+import co.com.crediya.cy_authentication.model.security.gateways.PasswordHasher;
 import co.com.crediya.cy_authentication.model.user.User;
 import co.com.crediya.cy_authentication.model.user.gateways.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +41,9 @@ class UserUseCaseTest {
     @Mock
     private RoleRepository roleRepository;
 
+    @Mock
+    private PasswordHasher passwordHasher;
+
     private UserUseCase userUseCase;
 
     private User validUser;
@@ -51,7 +55,9 @@ class UserUseCaseTest {
         // Reset all mocks before each test
         reset(userRepository, idTypeRepository, roleRepository);
         
-        userUseCase = new UserUseCase(userRepository, idTypeRepository, roleRepository);
+        userUseCase = new UserUseCase(userRepository, idTypeRepository, roleRepository, passwordHasher);
+
+        when(passwordHasher.hash(any())).thenReturn("$2a$12$dummyhashdummyhashdummyhashdum");
 
         validIdType = IdType.builder()
                 .id(1)
@@ -730,40 +736,34 @@ class UserUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should return user when no existing user found in UPDATE mode")
-    void shouldReturnUserWhenNoExistingUserFoundInUpdateMode() {
-        // Given
+    @DisplayName("Should fail when no existing user found in UPDATE mode")
+    void shouldFailWhenNoExistingUserFoundInUpdateMode() {
         when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.empty());
+        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
+        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
+
+        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
+            .expectErrorMatches(t ->
+                t instanceof InvalidUserDataException &&
+                t.getMessage().contains("No existe un usuario con los datos proporcionados"))
+            .verify();
+    }
+
+    @Test
+    @DisplayName("Should edit user successfully without changing password")
+    void shouldEditUserWithoutChangingPassword() {
+        User req = validUser.toBuilder().password(null).build(); // no viene nueva contraseña
+
+        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(validUser)); // existing
         when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
         when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
         when(userRepository.editUser(any())).thenReturn(Mono.just(validUser));
 
-        // When & Then
-        StepVerifier.create(userUseCase.editUser(Mono.just(validUser)))
-                .expectNextMatches(userRecord -> 
-                    userRecord.name().equals("John") &&
-                    userRecord.email().equals("john.doe@example.com"))
-                .verifyComplete();
-    }
-
-    @Test
-    @DisplayName("Should return existingUser when validation passes in CREATE mode")
-    void shouldReturnExistingUserWhenValidationPassesInCreateMode() {
-        // Given - Este caso es difícil de alcanzar en CREATE, pero podemos simular el else
-        User existingUser = validUser.toBuilder()
-                .email("john.doe@example.com")
-                .idNumber(12345678L)
-                .name("ExistingUser") // Diferente nombre para verificar que retorna el existingUser
-                .build();
-        
-        // Simular un caso donde no se cumple ninguna de las condiciones de error
-        // Esto requiere modificar temporalmente la lógica o usar un escenario específico
-        when(userRepository.findByEmailOrIdNumber(any(), any())).thenReturn(Mono.just(existingUser));
-        when(idTypeRepository.getIdTypeById(1)).thenReturn(Mono.just(validIdType));
-        when(roleRepository.getRoleById(1)).thenReturn(Mono.just(validRole));
-
-        // Este test podría fallar dependiendo de tu lógica exacta
-        // Podrías necesitar ajustar las condiciones
+        StepVerifier.create(userUseCase.editUser(Mono.just(req)))
+            .expectNextMatches(ur -> 
+                ur.name().equals("John") &&
+                ur.email().equals("john.doe@example.com"))
+            .verifyComplete();
     }
 
     @Test

@@ -35,7 +35,7 @@ public class UserUseCase {
     }
 
     public Mono<UserRecord> saveUser(Mono<User> user) {
-        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate), Mode.UPDATE))
+        return user.flatMap(toValidate -> validateUserData(Mono.just(toValidate), Mode.CREATE))
             .flatMap(validUser ->
                 Mono.zip(
                     idTypeRepository.getIdTypeById(validUser.getIdTypeId())

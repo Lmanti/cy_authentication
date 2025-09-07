@@ -12,7 +12,7 @@ import co.com.crediya.cy_authentication.api.dto.LoginRequest;
 import co.com.crediya.cy_authentication.api.dto.UserDTO;
 import co.com.crediya.cy_authentication.model.idtype.IdType;
 import co.com.crediya.cy_authentication.model.role.Role;
-import co.com.crediya.cy_authentication.model.security.JwtResponse;
+import co.com.crediya.cy_authentication.model.security.JwtToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -209,7 +209,7 @@ public class RouterRest {
                     @ApiResponse(
                         responseCode = "200", 
                         description = "Usuario ha iniciado sesión exitosamente",
-                        content = @Content(schema = @Schema(implementation = JwtResponse.class))
+                        content = @Content(schema = @Schema(implementation = JwtToken.class))
                     ),
                     @ApiResponse(
                         responseCode = "401", 
