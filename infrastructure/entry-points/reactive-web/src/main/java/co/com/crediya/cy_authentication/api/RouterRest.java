@@ -9,6 +9,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import co.com.crediya.cy_authentication.api.dto.CreateUserDTO;
 import co.com.crediya.cy_authentication.api.dto.EditUserDTO;
 import co.com.crediya.cy_authentication.api.dto.LoginRequest;
+import co.com.crediya.cy_authentication.api.dto.UserBasicInfo;
 import co.com.crediya.cy_authentication.api.dto.UserDTO;
 import co.com.crediya.cy_authentication.model.idtype.IdType;
 import co.com.crediya.cy_authentication.model.role.Role;
@@ -51,6 +52,23 @@ public class RouterRest {
                         responseCode = "200", 
                         description = "Lista de usuarios obtenida exitosamente",
                         content = @Content(schema = @Schema(implementation = UserDTO.class))
+                    )
+                }
+            )
+        ),
+        @RouterOperation(
+            path = userBaseRoute + "/basicInfo", 
+            method = RequestMethod.GET,
+            operation = @Operation(
+                operationId = "getAllUsersBasicInfo",
+                tags = {"Usuarios"},
+                summary = "Obtener la información básica de todos los usuarios",
+                description = "Retorna una lista con la información básica de todos los usuarios registrados",
+                responses = {
+                    @ApiResponse(
+                        responseCode = "200", 
+                        description = "Lista de información básica de usuarios obtenida exitosamente",
+                        content = @Content(schema = @Schema(implementation = UserBasicInfo.class))
                     )
                 }
             )
@@ -221,6 +239,7 @@ public class RouterRest {
     })
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
         return route(GET(userBaseRoute), handler::getAllUsers)
+            .andRoute(GET(userBaseRoute + "/basicInfo"), handler::getAllUsersBasicInfo)
             .andRoute(POST(userBaseRoute), handler::createUser)
             .andRoute(PUT(userBaseRoute), handler::updateUser)
             .andRoute(DELETE(userBaseRoute.concat("/{idNumber}")), handler::deleteUser)

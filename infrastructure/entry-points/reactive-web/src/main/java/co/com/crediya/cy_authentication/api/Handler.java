@@ -33,6 +33,11 @@ public class Handler {
             .flatMap(userList -> ServerResponse.ok().bodyValue(userMapper.toResponseList(userList)));
     }
 
+    public Mono<ServerResponse> getAllUsersBasicInfo(ServerRequest serverRequest) {
+        return userUseCase.getAllUsers().collectList()
+            .flatMap(userList -> ServerResponse.ok().bodyValue(userMapper.toResponseBasicList(userList)));
+    }
+
     public Mono<ServerResponse> updateUser(ServerRequest serverRequest) {
         return serverRequest.bodyToMono(EditUserDTO.class)
             .map(userMapper::toModel)

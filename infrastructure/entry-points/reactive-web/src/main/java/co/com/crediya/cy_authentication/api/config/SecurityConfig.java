@@ -73,6 +73,7 @@ public class SecurityConfig {
                 .pathMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/v3/api-docs/swagger-config").permitAll()
                 .pathMatchers("/api-docs", "/api-docs/**", "/api-docs.yaml", "/api-docs/swagger-config").permitAll()
                 .pathMatchers("/webjars/**").permitAll()
+                .pathMatchers(HttpMethod.GET, baseURL + "/basicInfo").permitAll()
                 .pathMatchers(HttpMethod.POST, baseURL + "/login").permitAll()
                 .pathMatchers(HttpMethod.POST, baseURL)
                     .hasAnyRole(Roles.ADMIN.toString(), Roles.ASESOR.toString())
