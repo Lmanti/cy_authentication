@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
 security:
   jwt:
     secret: AZdXJ0/eHaLdAjAw/S6Bngojh96bBMXwcvd38HwzAok=
@@ -9,20 +9,20 @@ spring:
   devtools:
     add-properties: false
   r2dbc:
-    host: localhost
-    port: 5432
-    database: cy_auth_db
-    schema: public
-    url: r2dbc:postgresql://localhost:5432/cy_auth_db
-    username: postgres
-    password: postgres
+    host: ${SPRING_R2DBC_HOST:localhost}
+    port: ${SPRING_R2DBC_PORT:5432}
+    database: ${SPRING_R2DBC_DATABASE:cy_auth_db}
+    schema: ${SPRING_R2DBC_SCHEMA:public}
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/cy_auth_db}
+    username: ${SPRING_R2DBC_USERNAME:postgres}
+    password: ${SPRING_R2DBC_PASSWORD:postgres}
     pool:
       initial-size: 5
       max-size: 20
       max-idle-time: 30m
   sql:
     init:
-      mode: always
+      mode: ${SPRING_SQL_INIT_MODE:always}
       schema-locations: classpath:schema.sql
       data-locations: classpath:data.sql
   profiles:
@@ -37,7 +37,7 @@ management:
       probes:
         enabled: true
 cors:
-  allowed-origins: "http://localhost:4200,http://localhost:8080,http://localhost:8081"
+  allowed-origins: ${CORS_ALLOWED-ORIGINS:http://localhost:4200,http://localhost:8080,http://localhost:8081}
 # logging:
 #   level:
 #     io.r2dbc.postgresql.QUERY: DEBUG
