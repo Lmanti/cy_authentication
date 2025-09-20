@@ -9,11 +9,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.DisplayName;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.reactivecommons.utils.ObjectMapper;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
 import reactor.core.publisher.Flux;
@@ -45,6 +47,10 @@ class UsersReactiveRepositoryAdapterTest {
     @Mock
     private TransactionalOperator readOnlyTransactional;
 
+    @Mock
+    private DatabaseClient databaseClient;
+
+    @InjectMocks
     private UserReactiveRepositoryAdapter adapter;
 
     private User validUser;
@@ -62,8 +68,6 @@ class UsersReactiveRepositoryAdapterTest {
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(readOnlyTransactional.transactional(any(Flux.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
-                
-        adapter = new UserReactiveRepositoryAdapter(repository, mapper, writeTransactional, readOnlyTransactional);
 
         validUser = User.builder()
                 .id(BigInteger.valueOf(1))

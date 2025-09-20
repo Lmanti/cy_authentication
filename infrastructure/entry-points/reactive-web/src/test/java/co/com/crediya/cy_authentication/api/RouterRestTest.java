@@ -68,7 +68,7 @@ class RouterRestTest {
         UserDTO userDTO = createSampleUserDTO();
         
         when(handler.createUser(any())).thenReturn(
-            ServerResponse.created(java.net.URI.create("/userDetails/12345678"))
+            ServerResponse.created(java.net.URI.create("/detallesUsuario/12345678"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(userDTO)
         );
@@ -124,7 +124,7 @@ class RouterRestTest {
     }
 
     @Test
-    @DisplayName("Should route GET /api/v1/usuarios/parameters/idTypes to getAllIdTypes handler")
+    @DisplayName("Should route GET /api/v1/usuarios/parametros/tiposDeIdentificacion to getAllIdTypes handler")
     void shouldRouteGetAllIdTypesToHandler() {
         // Given
         List<IdType> idTypes = Arrays.asList(createSampleIdType());
@@ -132,7 +132,7 @@ class RouterRestTest {
 
         // When & Then
         webTestClient.get()
-                .uri("/api/v1/usuarios/parameters/idTypes")
+                .uri("/api/v1/usuarios/parametros/tiposDeIdentificacion")
                 .exchange()
                 .expectStatus().isOk();
 
@@ -140,7 +140,7 @@ class RouterRestTest {
     }
 
     @Test
-    @DisplayName("Should route GET /api/v1/usuarios/parameters/roles to getAllRoles handler")
+    @DisplayName("Should route GET /api/v1/usuarios/parametros/roles to getAllRoles handler")
     void shouldRouteGetAllRolesToHandler() {
         // Given
         List<Role> roles = Arrays.asList(createSampleRole());
@@ -148,7 +148,7 @@ class RouterRestTest {
 
         // When & Then
         webTestClient.get()
-                .uri("/api/v1/usuarios/parameters/roles")
+                .uri("/api/v1/usuarios/parametros/roles")
                 .exchange()
                 .expectStatus().isOk();
 

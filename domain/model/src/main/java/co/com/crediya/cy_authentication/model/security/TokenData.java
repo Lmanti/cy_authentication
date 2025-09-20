@@ -11,5 +11,5 @@ import lombok.Setter;
 @Setter
 public class TokenData {
     private final String subject;
-    private final List<String> roles;
+    private final List<Integer> roles;
 }

@@ -1,5 +1,7 @@
 package co.com.crediya.cy_authentication.usecase.user;
 
+import java.math.BigInteger;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -100,6 +102,37 @@ public class UserUseCase {
             });
     }
 
+    public Flux<UserRecord> getUsersByEmail(List<String> userEmails) {
+        if (userEmails == null || userEmails.isEmpty()) {
+            return Flux.empty();
+        }
+
+        return Flux.zip(
+            idTypeRepository.getAllIdTypes().collectMap(IdType::getId),
+            roleRepository.getAllRoles().collectMap(Role::getId)
+        )
+        .flatMap(params -> {
+            Map<Integer, IdType> idTypesMap = params.getT1();
+            Map<Integer, Role> rolesMap = params.getT2();
+
+            return userRepository.findUsersByEmails(userEmails)
+                .map(user -> new UserRecord(
+                    user.getId(),
+                    user.getIdNumber(),
+                    idTypesMap.get(user.getIdTypeId()),
+                    user.getName(),
+                    user.getLastname(),
+                    user.getBirthDate(),
+                    user.getAddress(),
+                    user.getPhone(),
+                    user.getEmail(),
+                    user.getBaseSalary(),
+                    rolesMap.get(user.getRoleId()),
+                    user.getPassword()
+                ));
+        });
+    }
+
     public Mono<UserRecord> getByIdNumber(Long idNumber) {
         return userRepository.getByIdNumber(idNumber)
             .flatMap(user ->
@@ -176,8 +209,50 @@ public class UserUseCase {
         return userRepository.deleteUser(idNumber);
     }
 
-    public Mono<Boolean> existByIdNumber(Long idNumber) {
-        return userRepository.existByIdNumber(idNumber);
+    public Mono<UserRecord> getUserByEmail(String email) {
+        return userRepository.getByEmail(email)
+            .flatMap(user -> Mono.zip(
+                    idTypeRepository.getIdTypeById(user.getIdTypeId()),
+                    roleRepository.getRoleById(user.getRoleId())
+                )
+                .flatMap(params -> Mono.just(new UserRecord(
+                    user.getId(),
+                    user.getIdNumber(),
+                    params.getT1(),
+                    user.getName(),
+                    user.getLastname(),
+                    user.getBirthDate(),
+                    user.getAddress(),
+                    user.getPhone(),
+                    user.getEmail(),
+                    user.getBaseSalary(),
+                    params.getT2(),
+                    user.getPassword()
+                )))
+            );
+    }
+
+    public Mono<UserRecord> getUserById(BigInteger id) {
+        return userRepository.getById(id)
+            .flatMap(user -> Mono.zip(
+                    idTypeRepository.getIdTypeById(user.getIdTypeId()),
+                    roleRepository.getRoleById(user.getRoleId())
+                )
+                .flatMap(params -> Mono.just(new UserRecord(
+                    user.getId(),
+                    user.getIdNumber(),
+                    params.getT1(),
+                    user.getName(),
+                    user.getLastname(),
+                    user.getBirthDate(),
+                    user.getAddress(),
+                    user.getPhone(),
+                    user.getEmail(),
+                    user.getBaseSalary(),
+                    params.getT2(),
+                    user.getPassword()
+                )))
+            );
     }
 
     private Mono<User> validateUserData(Mono<User> userMono, Mode mode) {

@@ -21,7 +21,7 @@ class JwtTokenGeneratorTest {
   void shouldGenerateAndVerifyToken() {
     JwtTokenGenerator gen = new JwtTokenGenerator(SECRET);
 
-    String token = gen.generate("user-123", List.of("ADMIN", "CLIENTE"), Duration.ofHours(1));
+    String token = gen.generate("user-123", List.of(1, 3), Duration.ofHours(1));
     assertNotNull(token);
     assertTrue(token.split("\\.").length == 3, "El JWT debe tener 3 segmentos");
 
@@ -33,8 +33,8 @@ class JwtTokenGeneratorTest {
     // Ignorar orden de roles
     var roles = data.getRoles();
     assertEquals(2, roles.size());
-    assertTrue(roles.contains("ADMIN"));
-    assertTrue(roles.contains("CLIENTE"));
+    assertTrue(roles.contains(1));
+    assertTrue(roles.contains(3));
   }
 
   @Test
@@ -52,7 +52,7 @@ class JwtTokenGeneratorTest {
     JwtTokenGenerator gen = new JwtTokenGenerator(SECRET);
 
     // TTL en el pasado
-    String token = gen.generate("user-1", List.of("ADMIN"), Duration.ofSeconds(-1));
+    String token = gen.generate("user-1", List.of(1), Duration.ofSeconds(-1));
     assertTrue(gen.verify(token).isEmpty());
   }
 
@@ -61,7 +61,7 @@ class JwtTokenGeneratorTest {
   void shouldReturnEmptyForTamperedToken() {
     JwtTokenGenerator gen = new JwtTokenGenerator(SECRET);
 
-    String token = gen.generate("user-1", List.of("ADMIN"), Duration.ofMinutes(5));
+    String token = gen.generate("user-1", List.of(1), Duration.ofMinutes(5));
     // Modificar un carácter del token para romper la firma
     char[] chars = token.toCharArray();
     int pos = token.length() - 2; // penúltimo carácter

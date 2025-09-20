@@ -13,7 +13,7 @@ class TokenDataTest {
 
   @Test
   void constructorAndGettersWork() {
-    List<String> roles = new ArrayList<>(List.of("ADMIN", "USER"));
+    List<Integer> roles = new ArrayList<>(List.of(1, 3));
     TokenData td = new TokenData("sub-123", roles);
 
     assertEquals("sub-123", td.getSubject());
@@ -40,8 +40,8 @@ class TokenDataTest {
 
   @Test
   void differentInstancesAreNotEqual() {
-    TokenData a = new TokenData("id", List.of("ADMIN"));
-    TokenData b = new TokenData("id", List.of("ADMIN"));
+    TokenData a = new TokenData("id", List.of(1));
+    TokenData b = new TokenData("id", List.of(1));
     assertNotEquals(a, b, "Sin @EqualsAndHashCode, objetos distintos no deben ser equals");
   }
 }

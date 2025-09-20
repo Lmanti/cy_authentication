@@ -7,6 +7,6 @@ import java.util.Optional;
 import co.com.crediya.cy_authentication.model.security.TokenData;
 
 public interface TokenGenerator {
-    String generate(String subject, Collection<String> roles, Duration ttl);
+    String generate(String subject, Collection<Integer> roles, Duration ttl);
     Optional<TokenData> verify(String token);
 }

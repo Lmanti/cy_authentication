@@ -76,21 +76,6 @@ class SecurityConfigTest {
   }
 
   @Test
-  void existsRequiresCliente() {
-    client.get().uri(BASE + "/exists/1").exchange().expectStatus().isUnauthorized();
-
-    client.get().uri(BASE + "/exists/1")
-        .header("Authorization", "Bearer admin-token")
-        .exchange()
-        .expectStatus().isForbidden();
-
-    client.get().uri(BASE + "/exists/1")
-        .header("Authorization", "Bearer cliente-token")
-        .exchange()
-        .expectStatus().isOk();
-  }
-
-  @Test
   void otherRequiresAuthenticated() {
     client.get().uri(BASE + "/other").exchange().expectStatus().isUnauthorized();
 
@@ -112,7 +97,7 @@ class SecurityConfigTest {
     RouterFunction<ServerResponse> routes() {
       return route(POST("/api/v1/usuarios/login"), req -> ServerResponse.ok().build())
           .andRoute(POST("/api/v1/usuarios"), req -> ServerResponse.status(201).build())
-          .andRoute(GET("/api/v1/usuarios/exists/{id}"), req -> ServerResponse.ok().build())
+          .andRoute(GET("/api/v1/usuarios/infoUsuarios"), req -> ServerResponse.ok().build())
           .andRoute(GET("/api/v1/usuarios/other"), req -> ServerResponse.ok().build());
     }
   }

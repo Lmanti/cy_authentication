@@ -33,7 +33,7 @@ public class JwtTokenGenerator implements TokenGenerator {
     }
 
     @Override
-    public String generate(String subject, Collection<String> roles, Duration ttl) {
+    public String generate(String subject, Collection<Integer> roles, Duration ttl) {
         Instant now = Instant.now();
         return Jwts.builder()
             .setSubject(subject)
@@ -50,7 +50,7 @@ public class JwtTokenGenerator implements TokenGenerator {
         try {
             Claims claims = parser.parseClaimsJws(token).getBody();
             String subject = claims.getSubject();
-            List<String> roles = claims.get("roles", List.class);
+            List<Integer> roles = claims.get("roles", List.class);
             return Optional.of(new TokenData(subject, roles));
         } catch (JwtException e) {
             return Optional.empty();

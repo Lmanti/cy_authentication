@@ -10,6 +10,7 @@ import java.util.List;
 import co.com.crediya.cy_authentication.exception.InvalidCredentialsException;
 import co.com.crediya.cy_authentication.model.role.gateways.RoleRepository;
 import co.com.crediya.cy_authentication.model.security.JwtToken;
+import co.com.crediya.cy_authentication.model.security.TokenData;
 import co.com.crediya.cy_authentication.model.security.gateways.PasswordHasher;
 import co.com.crediya.cy_authentication.model.security.gateways.TokenGenerator;
 import co.com.crediya.cy_authentication.model.user.gateways.UserRepository;
@@ -34,8 +35,8 @@ public final class AuthenticateUserUseCase {
                                     return Mono.error(new InvalidCredentialsException("Credenciales inválidas"));
                                 } else {
                                     String token = tokenGenerator.generate(
-                                        toValidate.getIdNumber().toString(),
-                                        List.of(role.getName()),
+                                        toValidate.getId().toString(),
+                                        List.of(role.getId()),
                                         Duration.ofHours(4)
                                     );
                                     
@@ -44,5 +45,11 @@ public final class AuthenticateUserUseCase {
                             })
                     )
             );
+    }
+
+    public Mono<TokenData> extractTokenData(String token) {
+        return Mono.fromCallable(() -> tokenGenerator.verify(token))
+            .subscribeOn(Schedulers.boundedElastic())
+            .map(tokenData -> tokenData.get());
     }
 }

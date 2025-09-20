@@ -15,6 +15,8 @@ import co.com.crediya.cy_authentication.model.user.record.UserRecord;
 @Mapper(componentModel = "spring")
 public interface UserDTOMapper {
     UserDTO toResponse(UserRecord user);
+    
+    UserBasicInfo toResponseBasic(UserRecord user);
 
     List<UserDTO> toResponseList(List<UserRecord> users);
 

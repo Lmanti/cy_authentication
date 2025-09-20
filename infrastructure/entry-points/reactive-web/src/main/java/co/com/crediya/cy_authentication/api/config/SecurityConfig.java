@@ -25,23 +25,6 @@ public class SecurityConfig {
     
     private final String baseURL = "/api/v1/usuarios";
 
-    private enum Roles {
-        ADMIN("ADMIN"),
-        ASESOR("ASESOR"),
-        CLIENTE("CLIENTE");
-
-        private String value;
-
-        Roles(String value) {
-            this.value = value;
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(value);
-        }
-    }
-
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -73,12 +56,10 @@ public class SecurityConfig {
                 .pathMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml", "/v3/api-docs/swagger-config").permitAll()
                 .pathMatchers("/api-docs", "/api-docs/**", "/api-docs.yaml", "/api-docs/swagger-config").permitAll()
                 .pathMatchers("/webjars/**").permitAll()
-                .pathMatchers(HttpMethod.GET, baseURL + "/basicInfo").permitAll()
+                .pathMatchers(HttpMethod.POST, baseURL + "/infoUsuarios").permitAll()
                 .pathMatchers(HttpMethod.POST, baseURL + "/login").permitAll()
                 .pathMatchers(HttpMethod.POST, baseURL)
-                    .hasAnyRole(Roles.ADMIN.toString(), Roles.ASESOR.toString())
-                .pathMatchers(HttpMethod.GET, baseURL + "/exists/**")
-                    .hasRole(Roles.CLIENTE.toString())
+                    .hasAnyRole(RolesEnum.ADMIN.toString(), RolesEnum.ASESOR.toString())
                 .anyExchange().authenticated()
             )
             .addFilterAt(authWebFilter, SecurityWebFiltersOrder.AUTHENTICATION)

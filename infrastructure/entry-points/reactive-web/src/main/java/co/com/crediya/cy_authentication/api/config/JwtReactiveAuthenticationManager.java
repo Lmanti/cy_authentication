@@ -3,6 +3,7 @@ package co.com.crediya.cy_authentication.api.config;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +11,7 @@ import co.com.crediya.cy_authentication.model.security.gateways.TokenGenerator;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -22,14 +24,14 @@ public class JwtReactiveAuthenticationManager implements ReactiveAuthenticationM
     }
 
     @Override
-    public Mono<org.springframework.security.core.Authentication> authenticate(org.springframework.security.core.Authentication authentication) {
-        var token = (String) authentication.getCredentials();
+    public Mono<Authentication> authenticate(Authentication authentication) {
+        String token = (String) authentication.getCredentials();
         return Mono.fromCallable(() -> tokens.verify(token))
             .subscribeOn(Schedulers.boundedElastic())
             .flatMap(opt -> opt
                 .map(data -> {
-                var authorities = data.getRoles().stream()
-                    .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                List<SimpleGrantedAuthority> authorities = data.getRoles().stream()
+                    .map(r -> new SimpleGrantedAuthority("ROLE_" + RolesEnum.getRoleById(r)))
                     .collect(Collectors.toList());
                 return new UsernamePasswordAuthenticationToken(data.getSubject(), token, authorities);
                 })

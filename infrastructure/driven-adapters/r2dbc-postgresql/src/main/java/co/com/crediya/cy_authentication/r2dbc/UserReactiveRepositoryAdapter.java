@@ -1,9 +1,12 @@
 package co.com.crediya.cy_authentication.r2dbc;
 
 import java.math.BigInteger;
+import java.time.LocalDate;
+import java.util.List;
 
 import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.reactive.TransactionalOperator;
 
@@ -14,6 +17,7 @@ import co.com.crediya.cy_authentication.model.user.User;
 import co.com.crediya.cy_authentication.model.user.gateways.UserRepository;
 import co.com.crediya.cy_authentication.r2dbc.entity.UserEntity;
 import co.com.crediya.cy_authentication.r2dbc.helper.ReactiveAdapterOperations;
+import io.r2dbc.spi.Row;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,16 +33,19 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
 
     private final TransactionalOperator writeTransactional;
     private final TransactionalOperator readOnlyTransactional;
+    private final DatabaseClient databaseClient;
 
     public UserReactiveRepositoryAdapter(
         UserReactiveRepository repository,
         ObjectMapper mapper,
         TransactionalOperator transactionalOperator,
-        @Qualifier("readOnlyTransactionalOperator") TransactionalOperator readOnlyTransactional
+        @Qualifier("readOnlyTransactionalOperator") TransactionalOperator readOnlyTransactional,
+        DatabaseClient databaseClient
     ) {
         super(repository, mapper, d -> mapper.map(d, User.class));
         this.writeTransactional = transactionalOperator;
         this.readOnlyTransactional = readOnlyTransactional;
+        this.databaseClient = databaseClient;
     }
 
     @Override
@@ -91,6 +98,26 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 }
                 log.error("Error retrieving user with ID number {}: {}", idNumber, ex.getMessage(), ex);
                 return new DataRetrievalException("Error consultando usuario con identificación " + idNumber, ex);
+            })
+            .as(readOnlyTransactional::transactional); 
+    }
+
+    @Override
+    public Mono<User> getById(BigInteger id) {
+        log.info("Searching for user with ID: {}", id);
+    
+        return findById(id)
+            .doOnNext(entity -> log.debug("Found user entity with ID {}: {}", id, entity))
+            .switchIfEmpty(Mono.defer(() -> {
+                log.warn("User with ID {} not found", id);
+                return Mono.error(new UserNotFoundException("No se ha encontrado un usuario con ID " + id));
+            }))
+            .onErrorMap(ex -> {
+                if (ex instanceof UserNotFoundException) {
+                    return ex;
+                }
+                log.error("Error retrieving user with ID {}: {}", id, ex.getMessage(), ex);
+                return new DataRetrievalException("Error consultando usuario con ID " + id, ex);
             })
             .as(readOnlyTransactional::transactional); 
     }
@@ -192,6 +219,60 @@ public class UserReactiveRepositoryAdapter extends ReactiveAdapterOperations<
                 return new DataRetrievalException("Error consultando usuario con número de identificación " + idNumber, ex);
             })
             .as(readOnlyTransactional::transactional);
+    }
+
+    @Override
+    public Flux<User> findUsersByEmails(List<String> userEmails) {
+        log.info("Retrieving users by emails: {}", userEmails);
+        
+        if (userEmails == null || userEmails.isEmpty()) {
+            return Flux.empty();
+        }
+        
+        StringBuilder placeholders = new StringBuilder();
+        for (int i = 0; i < userEmails.size(); i++) {
+            if (i > 0) {
+                placeholders.append(", ");
+            }
+            placeholders.append("$").append(i + 1);
+        }
+        
+        String sql = String.format("SELECT * FROM users WHERE email IN (%s)", placeholders);
+        
+        return executeQuery(sql, userEmails)
+            .map(this::toEntity)
+            .doOnNext(user -> log.debug("Retrieved user: {}", user.getEmail()))
+            .doOnComplete(() -> log.info("Finished retrieving users by emails"))
+            .onErrorMap(ex -> {
+                log.error("Error retrieving users by emails", ex);
+                return new DataRetrievalException("Error al momento de consultar los usuarios por email", ex);
+            })
+            .as(readOnlyTransactional::transactional);
+    }
+
+    private Flux<UserEntity> executeQuery(String sql, List<String> params) {
+        DatabaseClient.GenericExecuteSpec spec = databaseClient.sql(sql);
+        for (int i = 0; i < params.size(); i++) {
+            spec = spec.bind(i, params.get(i));
+        }
+        return spec.map((row, rowMetadata) -> mapRow(row)).all();
+    }
+
+    private UserEntity mapRow(Row row) {
+        UserEntity entity = new UserEntity();
+        entity.setId(row.get("id", BigInteger.class));
+        entity.setIdNumber(row.get("id_number", Long.class));
+        entity.setIdTypeId(row.get("id_type_id", Integer.class));
+        entity.setName(row.get("name", String.class));
+        entity.setLastname(row.get("lastname", String.class));
+        entity.setBirthDate(row.get("birth_date", LocalDate.class));
+        entity.setAddress(row.get("address", String.class));
+        entity.setPhone(row.get("phone", String.class));
+        entity.setEmail(row.get("email", String.class));
+        entity.setBaseSalary(row.get("base_salary", Double.class));
+        entity.setRoleId(row.get("role_id", Integer.class));
+        entity.setPassword(row.get("password", String.class));
+        return entity;
     }
 
 }

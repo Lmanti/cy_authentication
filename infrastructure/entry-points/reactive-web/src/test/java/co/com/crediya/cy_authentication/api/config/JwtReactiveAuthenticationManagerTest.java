@@ -34,7 +34,7 @@ class JwtReactiveAuthenticationManagerTest {
   @DisplayName("Autentica con token válido y mapea roles con prefijo ROLE_")
   void authenticateSuccess() {
     String token = "good-token";
-    var data = new TokenData("user-123", List.of("ADMIN", "CLIENTE"));
+    var data = new TokenData("user-123", List.of(1, 3));
 
     when(tokenGenerator.verify(token)).thenReturn(Optional.of(data));
 

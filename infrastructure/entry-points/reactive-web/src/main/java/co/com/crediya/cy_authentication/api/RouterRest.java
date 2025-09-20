@@ -17,6 +17,7 @@ import co.com.crediya.cy_authentication.model.security.JwtToken;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
@@ -34,8 +35,8 @@ import org.springdoc.core.annotations.RouterOperations;
 @Configuration
 public class RouterRest {
     private final String userBaseRoute = "/api/v1/usuarios";
-    private final String idTypesBaseRoute = "/parameters/idTypes";
-    private final String rolesBaseRoute = "/parameters/roles";
+    private final String idTypesBaseRoute = "/parametros/tiposDeIdentificacion";
+    private final String rolesBaseRoute = "/parametros/roles";
 
     @Bean
     @RouterOperations({
@@ -57,18 +58,31 @@ public class RouterRest {
             )
         ),
         @RouterOperation(
-            path = userBaseRoute + "/basicInfo", 
-            method = RequestMethod.GET,
+            path = userBaseRoute + "/infoUsuarios", 
+            method = RequestMethod.POST,
             operation = @Operation(
                 operationId = "getAllUsersBasicInfo",
                 tags = {"Usuarios"},
-                summary = "Obtener la información básica de todos los usuarios",
-                description = "Retorna una lista con la información básica de todos los usuarios registrados",
+                summary = "Obtener la información básica de todos los usuarios cuyo email llega en la lista",
+                description = "Obtiene una lista de e-mails y retorna una lista con la información básica de todos los usuarios registrados qye hagan match",
+                requestBody = @RequestBody(
+                    required = true,
+                    content = @Content(
+                        mediaType = "application/json",
+                        array = @ArraySchema(
+                            schema = @Schema(implementation = String.class)
+                        )
+                    )
+                ),
                 responses = {
                     @ApiResponse(
                         responseCode = "200", 
                         description = "Lista de información básica de usuarios obtenida exitosamente",
-                        content = @Content(schema = @Schema(implementation = UserBasicInfo.class))
+                        content = @Content(
+                            array = @ArraySchema(
+                                schema = @Schema(implementation = UserBasicInfo.class)
+                            )
+                        )
                     )
                 }
             )
@@ -153,13 +167,39 @@ public class RouterRest {
             )
         ),
         @RouterOperation(
-            path = userBaseRoute + "/exists/{idNumber}", 
+            path = userBaseRoute + "/{userEmail}", 
             method = RequestMethod.GET,
             operation = @Operation(
-                operationId = "existsByIdNumber",
+                operationId = "getByEmail",
                 tags = {"Usuarios"},
-                summary = "Valida si existe un usuario",
-                description = "Valida si existe un usuario por su número de identificación",
+                summary = "Obtener la información básica de un usuario por email",
+                description = "Obtiene la información básica de un usuario por email",
+                parameters = {
+                    @Parameter(
+                        name = "userEmail", 
+                        description = "E-mail del usuario",
+                        in = ParameterIn.PATH,
+                        required = true,
+                        schema = @Schema(type = "string")
+                    )
+                },
+                responses = {
+                    @ApiResponse(
+                        responseCode = "200",
+                        description = "Usuario obtenido exitosamente",
+                        content = @Content(schema = @Schema(implementation = UserBasicInfo.class))
+                    )
+                }
+            )
+        ),
+        @RouterOperation(
+            path = userBaseRoute + "/detallesUsuario/{idNumber}", 
+            method = RequestMethod.GET,
+            operation = @Operation(
+                operationId = "getByidNumber",
+                tags = {"Usuarios"},
+                summary = "Obtener la información básica de un usuario por número de identificación",
+                description = "Obtiene la información básica de un usuario por número de identificación",
                 parameters = {
                     @Parameter(
                         name = "idNumber", 
@@ -171,8 +211,9 @@ public class RouterRest {
                 },
                 responses = {
                     @ApiResponse(
-                        responseCode = "200", 
-                        description = "Validación exitosa"
+                        responseCode = "200",
+                        description = "Usuario obtenido exitosamente",
+                        content = @Content(schema = @Schema(implementation = UserBasicInfo.class))
                     )
                 }
             )
@@ -235,15 +276,34 @@ public class RouterRest {
                     )
                 }
             )
+        ),
+        @RouterOperation(
+            path = userBaseRoute + "/consultarPorToken", 
+            method = RequestMethod.GET,
+            operation = @Operation(
+                operationId = "getUserByToken",
+                tags = {"Usuarios"},
+                summary = "Obtener la información básica de un usuario por token JWT",
+                description = "Retorna la información de un usuario filtrado por token JWT",
+                responses = {
+                    @ApiResponse(
+                        responseCode = "200", 
+                        description = "Información básica de usuarios obtenida exitosamente",
+                        content = @Content(schema = @Schema(implementation = UserBasicInfo.class))
+                    )
+                }
+            )
         )
     })
     public RouterFunction<ServerResponse> routerFunction(Handler handler) {
         return route(GET(userBaseRoute), handler::getAllUsers)
-            .andRoute(GET(userBaseRoute + "/basicInfo"), handler::getAllUsersBasicInfo)
+            .andRoute(POST(userBaseRoute + "/infoUsuarios"), handler::getUsersBasicInfo)
+            .andRoute(GET(userBaseRoute + "/consultarPorToken"), handler::getUserByToken)
             .andRoute(POST(userBaseRoute), handler::createUser)
             .andRoute(PUT(userBaseRoute), handler::updateUser)
             .andRoute(DELETE(userBaseRoute.concat("/{idNumber}")), handler::deleteUser)
-            .andRoute(GET(userBaseRoute.concat("/exists/{idNumber}")), handler::existsByIdNumber)
+            .andRoute(GET(userBaseRoute.concat("/{userEmail}")), handler::getByEmail)
+            .andRoute(GET(userBaseRoute.concat("/detallesUsuario/{idNumber}")), handler::getByidNumber)
             .andRoute(GET(userBaseRoute + idTypesBaseRoute), handler::getAllIdTypes)
             .andRoute(GET(userBaseRoute + rolesBaseRoute), handler::getAllRoles)
             .andRoute(POST(userBaseRoute.concat("/login")), handler::login);

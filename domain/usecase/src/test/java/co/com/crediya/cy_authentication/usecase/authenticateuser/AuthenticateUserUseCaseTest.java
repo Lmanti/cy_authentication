@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;
 
@@ -53,20 +54,20 @@ class AuthenticateUserUseCaseTest {
     String username = "john.doe@example.com";
     String rawPassword = "pass123";
     String hashedPassword = "$2a$12$hash";
-    Long idNumber = 12345678L;
+    BigInteger userId = BigInteger.valueOf(1l);
 
     User user = mock(User.class);
     when(user.getRoleId()).thenReturn(1);
     when(user.getPassword()).thenReturn(hashedPassword);
-    when(user.getIdNumber()).thenReturn(idNumber);
+    when(user.getId()).thenReturn(userId);
 
     Role role = mock(Role.class);
-    when(role.getName()).thenReturn("ADMIN");
+    when(role.getId()).thenReturn(1);
 
     when(userRepository.getByEmail(username)).thenReturn(Mono.just(user));
     when(roleRepository.getRoleById(1)).thenReturn(Mono.just(role));
     when(hasher.matches(rawPassword, hashedPassword)).thenReturn(true);
-    when(tokens.generate(idNumber.toString(), List.of("ADMIN"), Duration.ofHours(4))).thenReturn("jwt-token-123");
+    when(tokens.generate(userId.toString(), List.of(1), Duration.ofHours(4))).thenReturn("jwt-token-123");
 
     // Act & Assert
     StepVerifier.create(useCase.handle(username, rawPassword))
